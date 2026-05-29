@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jelajah Nusantara — AI Travel Planner</title>
+    <meta name="description" content="Rencanakan perjalanan impianmu di Indonesia dengan kecerdasan buatan." />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+
+    <!-- Fonts: Cinzel (logo) + Lora (headings) + Source Sans 3 (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="/src/style.css" />
+    <!-- Leaflet.js — Interactive Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════ NAVBAR ═══ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-inner">
+            <a class="nav-logo" href="#" onclick="showTab('planner')">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">Jelajah<em>Nusantara</em></span>
+            </a>
+
+            <div class="nav-tabs">
+                <button class="nav-tab active" id="tab-planner" onclick="showTab('planner')">
+                    <span class="tab-icon">🗺️</span> Planner
+                </button>
+                <button class="nav-tab" id="tab-mytrips" onclick="showTab('mytrips')">
+                    <span class="tab-icon">📚</span> Perjalananku
+                </button>
+                <button class="nav-tab" id="tab-community" onclick="showTab('community')">
+                    <span class="tab-icon">🌏</span> Komunitas
+                </button>
+            </div>
+
+            <div class="nav-auth" id="nav-auth">
+                <button class="btn-login" id="btn-login" onclick="handleLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="currentColor"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="currentColor"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                        <path fill="currentColor"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Masuk dengan Google
+                </button>
+                <div class="user-info hidden" id="user-info">
+                    <img class="user-avatar" id="user-avatar" src="" alt="Avatar" />
+                    <span class="user-name" id="user-name"></span>
+                    <button class="btn-logout" onclick="handleLogout()">Keluar</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════ HERO ══════ -->
+    <header class="hero" id="section-planner">
+        <div class="hero-bg-pattern"></div>
+        <div class="hero-content">
+            <p class="hero-eyebrow">✦ Didukung oleh Gemini AI ✦</p>
+            <h1 class="hero-title">
+                Temukan Keindahan<br />
+                <em>Nusantara</em>
+            </h1>
+            <p class="hero-subtitle">
+                Ceritakan impian perjalananmu — AI kami akan merancang itinerary<br />
+                hari per hari yang sempurna hanya untukmu.
+            </p>
+        </div>
+        <div class="hero-scroll-hint">
+            <span>Mulai Rencanakan</span>
+            <div class="scroll-arrow">↓</div>
+        </div>
+    </header>
+
+    <!-- ══════════════════════════════════ PLANNER SECTION ═ -->
+    <main id="main-content">
+
+        <!-- ── PLANNER PAGE ────────────────────────────────── -->
+        <section class="page active" id="page-planner">
+
+            <!-- Input Mode Toggle -->
+            <div class="container">
+                <div class="mode-toggle-wrapper">
+                    <div class="mode-toggle" id="mode-toggle">
+                        <button class="mode-btn active" id="mode-text" onclick="switchMode('text')">
+                            ✏️ Input Manual
+                        </button>
+                        <button class="mode-btn" id="mode-vision" onclick="switchMode('vision')">
+                            Upload Foto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── TEXT MODE FORM ────────────────────────── -->
+                <div class="planner-card" id="form-text">
+                    <div class="card-header">
+                        <h2>Rencanakan Perjalananmu</h2>
+                        <p>Isi detail perjalanan dan biarkan AI merancang itinerary terbaik untukmu</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="origin">
+                                <span class="label-icon">📍</span> Kota Asal
+                            </label>
+                            <input type="text" id="origin" class="form-input"
+                                placeholder="cth: Jakarta, Surabaya, Medan..." />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="destination">
+                                <span class="label-icon">🏝️</span> Destinasi Tujuan <span class="required">*</span>
+                            </label>
+                            <input type="text" id="destination" class="form-input"
+                                placeholder="cth: Bali, Raja Ampat, Lombok..." required />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="duration">
+                                <span class="label-icon">📅</span> Durasi Perjalanan <span class="required">*</span>
+                            </label>
+                            <select id="duration" class="form-input form-select" required>
+                                <option value="" disabled selected>Pilih durasi</option>
+                                <option value="2">2 Hari 1 Malam</option>
+                                <option value="3">3 Hari 2 Malam</option>
+                                <option value="4">4 Hari 3 Malam</option>
+                                <option value="5">5 Hari 4 Malam</option>
+                                <option value="7">7 Hari 6 Malam</option>
+                                <option value="10">10 Hari 9 Malam</option>
+                                <option value="14">2 Minggu</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="budget">
+                                <span class="label-icon">💰</span> Estimasi Anggaran <span class="required">*</span>
+                            </label>
+                            <select id="budget" class="form-input form-select" required>
+                                <option value="" disabled selected>Pilih anggaran</option>
+                                <option value="Budget (< Rp 1 juta/hari)">Budget (&lt; Rp 1 juta/hari)</option>
+                                <option value="Mid-range (Rp 1-3 juta/hari)">Mid-range (Rp 1-3 juta/hari)</option>
+                                <option value="Premium (Rp 3-5 juta/hari)">Premium (Rp 3-5 juta/hari)</option>
+                                <option value="Luxury (> Rp 5 juta/hari)">Luxury (&gt; Rp 5 juta/hari)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group form-group--full">
+                            <label class="form-label">
+                                <span class="label-icon">🧳</span> Gaya Wisata <span class="required">*</span>
+                            </label>
+                            <div class="style-chips" id="style-chips">
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Petualangan & Alam" />
+                                    <span>Petualangan & Alam</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Budaya & Sejarah" />
+                                    <span>Budaya & Sejarah</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Kuliner & Wisata Kota" />
+                                    <span>Kuliner & Wisata Kota</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Pantai & Bahari" />
+                                    <span>Pantai & Bahari</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Relaksasi & Wellness" />
+                                    <span>Relaksasi & Wellness</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Keluarga & Anak-anak" />
+                                    <span>Keluarga</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Bulan Madu & Romantis" />
+                                    <span>Bulan Madu</span>
+                                </label>
+                                <label class="chip">
+                                    <input type="radio" name="style" value="Backpacker & Hemat" />
+                                    <span>Backpacker</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-generate" id="btn-generate-text" onclick="generateItinerary()">
+                            <span class="btn-text">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                </svg>
+                                Buat Itinerary AI
+                            </span>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span> Merancang perjalananmu...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── VISION MODE FORM ──────────────────────── -->
+                <div class="planner-card hidden" id="form-vision">
+                    <div class="card-header">
+                        <h2>Upload Foto Destinasi</h2>
+                        <p>Unggah foto tempat wisata dan AI akan mengidentifikasi serta membuat itinerary untukmu</p>
+                    </div>
+
+                    <div class="upload-area" id="upload-area" ondrop="handleDrop(event)"
+                        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+                        onclick="document.getElementById('file-input').click()">
+                        <div class="upload-content" id="upload-content">
+                            <div class="upload-icon">📸</div>
+                            <p class="upload-title">Seret foto ke sini atau klik untuk memilih</p>
+                            <p class="upload-hint">Mendukung JPEG, PNG, WEBP · Maks 10 MB</p>
+                        </div>
+                        <div class="upload-preview hidden" id="upload-preview">
+                            <img id="preview-img" src="" alt="Preview" />
+                            <div class="preview-overlay">
+                                <span>Ganti Foto</span>
+                            </div>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(event)" />
+                    </div>
+
+                    <div class="form-group" style="margin-top:1.5rem">
+                        <label class="form-label" for="vision-hint">
+                            <span class="label-icon">💬</span> Keterangan Tambahan (opsional)
+                        </label>
+                        <input type="text" id="vision-hint" class="form-input"
+                            placeholder="cth: ini foto Gunung Bromo, saya ingin wisata 3 hari..." />
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-generate" id="btn-generate-vision" onclick="generateVision()">
+                            <span class="btn-text">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Analisis & Buat Itinerary
+                            </span>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span> Menganalisis foto...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── ERROR BANNER ──────────────────────────── -->
+                <div class="error-banner hidden" id="error-banner">
+                    <span class="error-icon">⚠️</span>
+                    <span id="error-text"></span>
+                    <button onclick="dismissError()">✕</button>
+                </div>
+
+                <!-- ── RESULT SECTION ────────────────────────── -->
+                <div class="result-section hidden" id="result-section">
+                    <div class="result-header">
+                        <div class="result-meta" id="result-meta"></div>
+                        <div class="result-actions">
+                            <button class="btn-action btn-share" onclick="shareItinerary()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="18" cy="5" r="3" />
+                                    <circle cx="6" cy="12" r="3" />
+                                    <circle cx="18" cy="19" r="3" />
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                </svg>
+                                Bagikan
+                            </button>
+                            <button class="btn-action btn-save" id="btn-save" onclick="saveItinerary()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                                Simpan Itinerary
+                            </button>
+                            <label class="public-toggle">
+                                <input type="checkbox" id="toggle-public" />
+                                <span class="toggle-track"></span>
+                                <span class="toggle-label">Publik</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ── VIEW TOGGLE TABS ── -->
+                    <div class="result-view-tabs" id="result-view-tabs">
+                        <button class="result-view-tab active" id="vtab-itinerary"
+                            onclick="switchResultView('itinerary')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                            </svg>
+                            Itinerary
+                        </button>
+                        <button class="result-view-tab" id="vtab-map" onclick="switchResultView('map')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2">
+                                <polygon
+                                    points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                                <line x1="9" y1="3" x2="9" y2="18" />
+                                <line x1="15" y1="6" x2="15" y2="21" />
+                            </svg>
+                            Peta Rute
+                            <span class="tab-badge-new">BARU</span>
+                        </button>
+                    </div>
+
+                    <!-- ── ITINERARY VIEW ── -->
+                    <div id="view-itinerary">
+                        <div class="result-body" id="result-body"></div>
+                    </div>
+
+                    <!-- ── MAP VIEW ── -->
+                    <div id="view-map" class="hidden">
+                        <!-- Map Loading State -->
+                        <div class="map-loading-state hidden" id="map-loading-state">
+                            <div class="spinner" style="margin: 0 auto; border-color: rgba(0,0,0,0.1); border-top-color: var(--teal-600)"></div>
+                            <p class="map-loading-text">✨ AI sedang mengekstrak lokasi dari itinerary...</p>
+                        </div>
+
+                        <!-- Map Error State -->
+                        <div class="map-error-state hidden" id="map-error-state">
+                            <span class="map-error-icon">🗺️</span>
+                            <p id="map-error-msg">Gagal memuat peta.</p>
+                            <button class="btn-regen" onclick="retryMapExtraction()" style="margin-top:1rem">
+                                🔄 Coba Lagi
+                            </button>
+                        </div>
+
+                        <!-- Leaflet Map Container -->
+                        <div id="route-map" class="route-map-container hidden"></div>
+
+                        <!-- Day Legend -->
+                        <div class="map-legend hidden" id="map-legend">
+                            <h4 class="map-legend-title">🗓️ Rute Perjalanan</h4>
+                            <div class="map-legend-days" id="map-legend-days"></div>
+                        </div>
+                    </div>
+
+                    <div class="regenerate-row">
+                        <button class="btn-regen" onclick="regenerate()">
+                            🔄 Buat Ulang Itinerary
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── MY TRIPS PAGE ───────────────────────────────── -->
+        <section class="page hidden" id="page-mytrips">
+            <div class="container">
+                <div class="page-header">
+                    <h2 class="page-title">📚 Perjalananku</h2>
+                    <p class="page-subtitle">Semua itinerary yang pernah kamu simpan</p>
+                </div>
+
+                <div class="auth-gate hidden" id="mytrips-auth-gate">
+                    <div class="auth-gate-content">
+                        <div class="auth-gate-icon">🔒</div>
+                        <h3>Masuk untuk melihat perjalananmu</h3>
+                        <p>Login dengan Google untuk menyimpan dan mengakses itinerary-mu kapan saja.</p>
+                        <button class="btn-login large" onclick="handleLogin()">
+                            Masuk dengan Google
+                        </button>
+                    </div>
+                </div>
+
+                <div id="mytrips-loading" class="loading-state hidden">
+                    <div class="skeleton-grid">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+                </div>
+
+                <div class="trips-grid" id="mytrips-grid"></div>
+
+                <div class="empty-state hidden" id="mytrips-empty">
+                    <div class="empty-icon">🗺️</div>
+                    <h3>Belum ada perjalanan tersimpan</h3>
+                    <p>Buat itinerary pertamamu sekarang!</p>
+                    <button class="btn-cta" onclick="showTab('planner')">Mulai Rencanakan</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── COMMUNITY PAGE ──────────────────────────────── -->
+        <section class="page hidden" id="page-community">
+            <div class="container">
+                <div class="page-header">
+                    <h2 class="page-title">Komunitas Jelajah</h2>
+                    <p class="page-subtitle">Inspirasi perjalanan dari sesama petualang Nusantara</p>
+                </div>
+
+                <div id="community-loading" class="loading-state">
+                    <div class="skeleton-grid">
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                        <div class="skeleton-card"></div>
+                    </div>
+                </div>
+
+                <div class="trips-grid" id="community-grid"></div>
+
+                <div class="empty-state hidden" id="community-empty">
+                    <div class="empty-icon">🌟</div>
+                    <h3>Belum ada itinerary publik</h3>
+                    <p>Jadilah yang pertama berbagi perjalananmu!</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ══════════════════════════════════ MODALS ══════════ -->
+
+    <!-- Trip Detail Modal -->
+    <div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ══════════════════════════════════ FOOTER ══════════ -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-logo">
+                <span class="logo-icon">✦</span>
+                <span>Jelajah<em>Nusantara</em></span>
+            </div>
+            <p class="footer-copy">
+                Dibangun dengan ❤️ untuk Hackathon · Didukung Google Gemini AI
+            </p>
+            <p class="footer-tagline">
+                Dari Sabang sampai Merauke, kami siap memandu perjalananmu ✦
+            </p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS (must load before main.js module) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
