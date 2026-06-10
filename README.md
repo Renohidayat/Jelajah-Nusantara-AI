@@ -497,5 +497,5 @@ npm run deploy:cloudrun    # Deploy ke Google Cloud Run
 
 ---
 
-**Last Updated**: June 2024  
+**Last Updated**: June 2026
 **Version**: 1.0.0
