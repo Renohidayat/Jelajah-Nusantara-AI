@@ -8,6 +8,8 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
@@ -50,9 +52,87 @@ try {
 }
 
 // ─────────────────────────────────────────────
-//  2. GEMINI AI INITIALIZATION
+//  2. GEMINI AI INITIALIZATION + Multi-key rotation
+//     Supports multiple GEMINI API keys via `GEMINI_API_KEYS`
+//     (comma-separated) with automatic rotation and cooldown.
 // ─────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const RAW_GEMINI_KEYS = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "").split(",").map(k => k.trim()).filter(Boolean);
+if (RAW_GEMINI_KEYS.length === 0) {
+    console.error("❌ No Gemini API keys found. Set GEMINI_API_KEYS or GEMINI_API_KEY in .env");
+    process.exit(1);
+}
+
+const GEMINI_KEY_COOLDOWN_MS = parseInt(process.env.GEMINI_KEY_COOLDOWN_MS || "60000", 10); // default 60s
+
+const genAIClients = new Map();
+const keyStates = RAW_GEMINI_KEYS.map(k => ({ key: k, disabledUntil: 0 }));
+let roundRobinIndex = 0;
+
+function getClientForKey(key) {
+    if (!genAIClients.has(key)) genAIClients.set(key, new GoogleGenerativeAI(key));
+    return genAIClients.get(key);
+}
+
+function findNextKeyIndex() {
+    const now = Date.now();
+    const n = keyStates.length;
+    for (let i = 0; i < n; i++) {
+        const idx = (roundRobinIndex + i) % n;
+        if (keyStates[idx].disabledUntil <= now) {
+            roundRobinIndex = (idx + 1) % n;
+            return idx;
+        }
+    }
+    // If all keys are in cooldown, still return the next index (best-effort)
+    const idx = roundRobinIndex % n;
+    roundRobinIndex = (idx + 1) % n;
+    return idx;
+}
+
+/**
+ * Generate content using modelName and rotate across keys when encountering 429/503.
+ * Returns the same result object as `model.generateContent`.
+ */
+async function generateContentWithRotation(modelName, generationConfig, prompt) {
+    let lastErr;
+    const attempts = keyStates.length;
+    for (let a = 0; a < attempts; a++) {
+        const idx = findNextKeyIndex();
+        const key = keyStates[idx].key;
+        const client = getClientForKey(key);
+        const model = client.getGenerativeModel({ model: modelName, safetySettings, generationConfig });
+        try {
+            const result = await withGeminiRetry(() => model.generateContent(prompt));
+            return result;
+        } catch (err) {
+            lastErr = err;
+            const status = err?.status ?? err?.statusCode;
+            if (status === 429 || status === 503) {
+                keyStates[idx].disabledUntil = Date.now() + GEMINI_KEY_COOLDOWN_MS;
+                console.warn(`⚠️ Gemini key at index ${idx} temporarily disabled until ${new Date(keyStates[idx].disabledUntil).toISOString()} (status=${status})`);
+                continue; // try next key
+            }
+            throw err; // non-retryable error
+        }
+    }
+    throw lastErr || new Error("All Gemini keys exhausted or failed.");
+}
+
+/**
+ * Try primary model first; if it fails due to rate/overload, fallback to other model.
+ */
+async function generateWithFallback(primaryModel, fallbackModel, generationConfig, prompt) {
+    try {
+        return await generateContentWithRotation(primaryModel, generationConfig, prompt);
+    } catch (err) {
+        const status = err?.status ?? err?.statusCode;
+        if (status === 503 || status === 429) {
+            console.warn(`⚠️ ${primaryModel} unavailable (${status}), falling back to ${fallbackModel}…`);
+            return await generateContentWithRotation(fallbackModel, generationConfig, prompt);
+        }
+        throw err;
+    }
+}
 
 const safetySettings = [
     { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -133,6 +213,67 @@ const verifyToken = async (req, res, next) => {
 };
 
 // ─────────────────────────────────────────────
+//  Admin helpers + Gemini key persistence (Firestore)
+// ─────────────────────────────────────────────
+const ADMIN_UIDS = (process.env.ADMIN_UIDS || "").split(",").map(s => s.trim()).filter(Boolean);
+function isAdmin(req) {
+    if (!req.user) return false;
+    if (req.user.admin) return true; // custom claim
+    return ADMIN_UIDS.includes(req.user.uid);
+}
+
+async function loadKeysFromFirestore() {
+    try {
+        const snapshot = await db.collection('gemini_keys').orderBy('createdAt', 'asc').get();
+        if (!snapshot.empty) {
+            // replace in-memory keys with persisted ones
+            keyStates.length = 0;
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.key) {
+                    keyStates.push({ key: data.key, disabledUntil: data.disabledUntil || 0, id: doc.id });
+                    // ensure client instance exists
+                    getClientForKey(data.key);
+                }
+            });
+            console.log(`✅ Loaded ${keyStates.length} Gemini keys from Firestore.`);
+        } else {
+            console.log('ℹ️ No Gemini keys found in Firestore; using environment keys.');
+        }
+    } catch (err) {
+        console.error('❌ Failed to load Gemini keys from Firestore:', err.message);
+    }
+}
+
+async function persistKeyToFirestore(key) {
+    try {
+        const docRef = await db.collection('gemini_keys').add({ key, disabledUntil: 0, createdAt: FieldValue.serverTimestamp() });
+        await loadKeysFromFirestore();
+        return docRef.id;
+    } catch (err) {
+        throw err;
+    }
+}
+
+async function removeKeyFromFirestore(id) {
+    try {
+        await db.collection('gemini_keys').doc(id).delete();
+        await loadKeysFromFirestore();
+    } catch (err) {
+        throw err;
+    }
+}
+
+async function updateKeyInFirestore(id, updates) {
+    try {
+        await db.collection('gemini_keys').doc(id).update(updates);
+        await loadKeysFromFirestore();
+    } catch (err) {
+        throw err;
+    }
+}
+
+// ─────────────────────────────────────────────
 //  6. HELPER — Build Gemini Prompt
 // ─────────────────────────────────────────────
 const buildItineraryPrompt = ({ origin, destination, duration, budget, style }) => `
@@ -192,6 +333,20 @@ informasi berikut:
 
 Pastikan semua rekomendasi tempat wisata, restoran, dan akomodasi adalah nyata dan ada di ${destination}.
 Gunakan Bahasa Indonesia yang ramah, informatif, dan mengajak.
+
+**PENTING — DATA ANGGARAN TERSTRUKTUR:**
+Di bagian PALING AKHIR output, setelah semua konten Markdown, kamu WAJIB menambahkan blok data anggaran
+dalam format berikut (persis seperti ini, tanpa modifikasi format):
+
+<!--BUDGET_JSON
+{"categories":[{"name":"Transportasi","amount":ANGKA},{"name":"Akomodasi","amount":ANGKA},{"name":"Makan & Minum","amount":ANGKA},{"name":"Tiket Wisata","amount":ANGKA},{"name":"Oleh-oleh & Lain-lain","amount":ANGKA}],"total":ANGKA_TOTAL,"currency":"IDR"}
+BUDGET_JSON-->
+
+ATURAN untuk blok BUDGET_JSON:
+- Ganti ANGKA dengan estimasi biaya dalam Rupiah (angka bulat, TANPA titik/koma/Rp)
+- "total" adalah jumlah semua amount
+- Angka harus realistis dan sesuai dengan anggaran "${budget}" untuk ${duration} hari di ${destination}
+- JANGAN menambahkan teks apapun setelah blok BUDGET_JSON
 `;
 
 const buildVisionPrompt = (destination) => `
@@ -223,10 +378,64 @@ Lakukan hal berikut:
 - [3-5 tips spesifik]
 
 Gunakan Bahasa Indonesia yang ramah dan informatif.
+
+**PENTING — DATA ANGGARAN TERSTRUKTUR:**
+Di bagian PALING AKHIR output, setelah semua konten Markdown, kamu WAJIB menambahkan blok data anggaran
+dalam format berikut (persis seperti ini, tanpa modifikasi format):
+
+<!--BUDGET_JSON
+{"categories":[{"name":"Transportasi","amount":ANGKA},{"name":"Akomodasi","amount":ANGKA},{"name":"Makan & Minum","amount":ANGKA},{"name":"Tiket Wisata","amount":ANGKA},{"name":"Oleh-oleh & Lain-lain","amount":ANGKA}],"total":ANGKA_TOTAL,"currency":"IDR"}
+BUDGET_JSON-->
+
+ATURAN untuk blok BUDGET_JSON:
+- Ganti ANGKA dengan estimasi biaya dalam Rupiah (angka bulat, TANPA titik/koma/Rp)
+- "total" adalah jumlah semua amount
+- Angka harus realistis untuk perjalanan 3 hari di destinasi foto tersebut dengan budget mid-range
+- JANGAN menambahkan teks apapun setelah blok BUDGET_JSON
 `;
 
 // ─────────────────────────────────────────────
-//  6b. HELPER — Build Location Extraction Prompt
+//  6b. HELPER — Extract Budget Data from AI Response
+// ─────────────────────────────────────────────
+function extractBudgetData(text) {
+    try {
+        const match = text.match(/<!--BUDGET_JSON\s*([\s\S]*?)\s*BUDGET_JSON-->/)
+        if (!match) return null
+
+        const json = match[1].trim()
+        const data = JSON.parse(json)
+
+        // Validate structure
+        if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
+            return null
+        }
+
+        // Sanitize: ensure all amounts are positive numbers
+        data.categories = data.categories
+            .filter(c => c.name && typeof c.amount === 'number' && c.amount >= 0)
+            .map(c => ({ name: String(c.name), amount: Math.round(c.amount) }))
+
+        if (data.categories.length === 0) return null
+
+        // Recalculate total from categories to avoid inconsistency
+        data.total = data.categories.reduce((sum, c) => sum + c.amount, 0)
+        data.currency = data.currency || 'IDR'
+
+        console.log(`✅ Budget extracted: ${data.categories.length} categories, total Rp ${data.total.toLocaleString('id-ID')}`)
+        return data
+    } catch (err) {
+        console.warn('⚠️  Budget JSON parse failed:', err.message)
+        return null
+    }
+}
+
+/** Strip the hidden BUDGET_JSON block from itinerary text before sending to client */
+function stripBudgetBlock(text) {
+    return text.replace(/<!--BUDGET_JSON[\s\S]*?BUDGET_JSON-->/g, '').trim()
+}
+
+// ─────────────────────────────────────────────
+//  6c. HELPER — Build Location Extraction Prompt
 // ─────────────────────────────────────────────
 const buildLocationExtractionPrompt = (itineraryText, duration) => `
 Ekstrak tempat wisata dari itinerary berikut. Kembalikan HANYA JSON valid, tanpa teks lain.
@@ -250,7 +459,7 @@ ${itineraryText}
 // ─────────────────────────────────────────────
 
 // ── 7.1  Health Check ──────────────────────────
-app.get("/", (_req, res) => {
+app.get("/api/health", (_req, res) => {
     res.json({
         status: "✅ Jelajah Nusantara API is running",
         version: "1.0.0",
@@ -285,30 +494,7 @@ async function withGeminiRetry(fn, maxTries = 4) {
     throw lastErr;
 }
 
-/**
- * Try primary model first; if it throws 503 after all retries, fall back to a more stable model.
- * @param {string} primaryModel  - e.g. "gemini-2.5-flash"
- * @param {string} fallbackModel - e.g. "gemini-1.5-flash"
- * @param {object} generationConfig
- * @param {string} prompt
- */
-async function generateWithFallback(primaryModel, fallbackModel, generationConfig, prompt) {
-    const tryModel = async (modelName) => {
-        const model = genAI.getGenerativeModel({ model: modelName, safetySettings, generationConfig });
-        return await withGeminiRetry(() => model.generateContent(prompt));
-    };
 
-    try {
-        return await tryModel(primaryModel);
-    } catch (err) {
-        const status = err?.status ?? err?.statusCode;
-        if (status === 503 || status === 429) {
-            console.warn(`⚠️  ${primaryModel} unavailable (${status}), falling back to ${fallbackModel}…`);
-            return await tryModel(fallbackModel);
-        }
-        throw err;
-    }
-}
 
 app.post("/api/extract-locations", async (req, res) => {
     const { itineraryText, duration } = req.body;
@@ -406,15 +592,15 @@ app.post("/api/extract-locations", async (req, res) => {
     } catch (err) {
         const status = err?.status ?? err?.statusCode;
         const isOverloaded = status === 503;
-        const isRateLimit  = status === 429;
+        const isRateLimit = status === 429;
 
         console.error(`❌ Location extraction error [${status ?? 'unknown'}]:`, err.message);
         return res.status(isOverloaded || isRateLimit ? 503 : 500).json({
             error: isOverloaded
                 ? "Server AI sedang sibuk, coba lagi dalam beberapa detik."
                 : isRateLimit
-                ? "Terlalu banyak permintaan, coba lagi sebentar."
-                : "Gagal mengekstrak lokasi dari itinerary.",
+                    ? "Terlalu banyak permintaan, coba lagi sebentar."
+                    : "Gagal mengekstrak lokasi dari itinerary.",
             retryable: isOverloaded || isRateLimit,
             details: err.message,
         });
@@ -477,23 +663,29 @@ app.post("/api/generate", async (req, res) => {
     }
 
     try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            safetySettings,
-        });
-
         const prompt = buildItineraryPrompt({ origin, destination, duration, budget, style });
-        const result = await model.generateContent(prompt);
+        const generationConfig = { temperature: 0.7 };
+        const result = await generateWithFallback(
+            "gemini-2.5-flash",
+            "gemini-1.5-flash",
+            generationConfig,
+            prompt
+        );
         const response = await result.response;
-        const itineraryText = response.text();
+        const rawText = response.text();
 
-        if (!itineraryText) {
+        if (!rawText) {
             return res.status(500).json({ error: "AI tidak menghasilkan konten. Coba lagi." });
         }
+
+        // Extract budget breakdown before stripping the hidden block
+        const budgetBreakdown = extractBudgetData(rawText);
+        const itineraryText = stripBudgetBlock(rawText);
 
         return res.json({
             success: true,
             itineraryText,
+            budgetBreakdown,
             tripData: { origin, destination, duration, budget, style },
         });
     } catch (err) {
@@ -518,11 +710,6 @@ app.post("/api/generate-vision", upload.single("image"), async (req, res) => {
         const imageBase64 = req.file.buffer.toString("base64");
         const mimeType = req.file.mimetype;
 
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            safetySettings,
-        });
-
         const imagePart = {
             inlineData: {
                 data: imageBase64,
@@ -532,13 +719,23 @@ app.post("/api/generate-vision", upload.single("image"), async (req, res) => {
 
         const textPart = { text: buildVisionPrompt(destination) };
 
-        const result = await model.generateContent([textPart, imagePart]);
+        const generationConfig = { temperature: 0.3, maxOutputTokens: 8192 };
+        const result = await generateWithFallback(
+            "gemini-2.5-flash",
+            "gemini-1.5-flash",
+            generationConfig,
+            [textPart, imagePart]
+        );
         const response = await result.response;
-        const itineraryText = response.text();
+        const rawText = response.text();
 
-        if (!itineraryText) {
+        if (!rawText) {
             return res.status(500).json({ error: "AI tidak menghasilkan konten dari gambar ini." });
         }
+
+        // Extract budget breakdown before stripping the hidden block
+        const budgetBreakdown = extractBudgetData(rawText);
+        const itineraryText = stripBudgetBlock(rawText);
 
         // Try to extract destination name from AI response for tripData
         const destMatch = itineraryText.match(/\*\*Nama Tempat:\*\*\s*(.+)/);
@@ -549,6 +746,7 @@ app.post("/api/generate-vision", upload.single("image"), async (req, res) => {
         return res.json({
             success: true,
             itineraryText,
+            budgetBreakdown,
             tripData: {
                 origin: "Dari Foto",
                 destination: `${aiDestination} — ${aiLocation}`,
@@ -768,6 +966,25 @@ app.post("/api/itineraries/:id/like", verifyToken, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+//  7.12 SERVING STATIC FILES (FRONTEND)
+// ─────────────────────────────────────────────
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicPath = path.join(__dirname, "public");
+app.use(express.static(publicPath));
+
+
+
+// Handler cadangan untuk mengarahkan rute non-API ke index.html (SPA routing support)
+app.get("*", (req, res, next) => {
+    // Jika request mengarah ke rute API tetapi tidak terdaftar, lanjutkan ke error/404
+    if (req.path.startsWith("/api")) {
+        return next();
+    }
+    res.sendFile(path.join(publicPath, "index.html"));
+});
+
+// ─────────────────────────────────────────────
 //  8. GLOBAL ERROR HANDLER
 // ─────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
@@ -792,4 +1009,67 @@ app.listen(PORT, () => {
     console.log(`   ├─ Generate: POST /api/generate`);
     console.log(`   ├─ Vision  : POST /api/generate-vision`);
     console.log(`   └─ Trips   : CRUD /api/itineraries\n`);
+});
+
+// Load persisted Gemini keys from Firestore (best-effort)
+loadKeysFromFirestore().catch(err => console.warn('Failed initial Gemini key load:', err.message));
+
+// ── Admin: Manage Gemini Keys (Firestore-backed) ─────────────────
+app.get('/api/gemini-keys', verifyToken, async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden: admin only.' });
+    try {
+        const snapshot = await db.collection('gemini_keys').orderBy('createdAt', 'asc').get();
+        const keys = snapshot.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                keyMasked: data.key ? ('****' + data.key.slice(-6)) : null,
+                disabledUntil: data.disabledUntil || 0,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
+            };
+        });
+        return res.json({ success: true, keys });
+    } catch (err) {
+        console.error('❌ Fetch gemini keys error:', err.message);
+        return res.status(500).json({ error: 'Gagal mengambil kunci.', details: err.message });
+    }
+});
+
+app.post('/api/gemini-keys', verifyToken, async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden: admin only.' });
+    const { key } = req.body;
+    if (!key || typeof key !== 'string' || key.length < 10) return res.status(400).json({ error: 'Invalid key.' });
+    try {
+        const id = await persistKeyToFirestore(key);
+        return res.status(201).json({ success: true, id });
+    } catch (err) {
+        console.error('❌ Persist gemini key error:', err.message);
+        return res.status(500).json({ error: 'Gagal menyimpan kunci.', details: err.message });
+    }
+});
+
+app.patch('/api/gemini-keys/:id', verifyToken, async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden: admin only.' });
+    const { id } = req.params;
+    const { disabledUntil } = req.body;
+    if (disabledUntil !== undefined && typeof disabledUntil !== 'number') return res.status(400).json({ error: 'disabledUntil must be a number (timestamp ms).' });
+    try {
+        await updateKeyInFirestore(id, { ...(disabledUntil !== undefined ? { disabledUntil } : {}) });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('❌ Update gemini key error:', err.message);
+        return res.status(500).json({ error: 'Gagal memperbarui kunci.', details: err.message });
+    }
+});
+
+app.delete('/api/gemini-keys/:id', verifyToken, async (req, res) => {
+    if (!isAdmin(req)) return res.status(403).json({ error: 'Forbidden: admin only.' });
+    const { id } = req.params;
+    try {
+        await removeKeyFromFirestore(id);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('❌ Delete gemini key error:', err.message);
+        return res.status(500).json({ error: 'Gagal menghapus kunci.', details: err.message });
+    }
 });

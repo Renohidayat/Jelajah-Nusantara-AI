@@ -31,6 +31,10 @@ let leafletMap = null          // Leaflet map instance
 let mapDays = null             // Extracted location data
 let mapExtractAborted = false  // Flag to cancel stale requests
 
+// ── BUDGET STATE ───────────────────────────────
+let budgetData = null          // AI budget breakdown data
+let budgetChartInstance = null // Chart.js instance to avoid memory leaks / redraw bugs
+
 // ── LEAFLET LOADER ─────────────────────────────
 // Garantikan window.L tersedia sebelum render peta, tanpa peduli kecepatan CDN
 let _leafletLoadPromise = null
@@ -72,19 +76,21 @@ async function boot() {
         firebaseApp = initializeApp(firebaseConfig)
         auth = getAuth(firebaseApp)
 
-        // Set persistence sekali di sini, sebelum operasi auth apapun
+        // Set persistence sekali di sini
         await setPersistence(auth, browserLocalPersistence)
 
-        // onAuthStateChanged adalah SATU-SATUNYA sumber kebenaran auth state
-        // Tidak perlu handleRedirectResult() karena kita pakai popup sekarang
         onAuthStateChanged(auth, (user) => {
             currentUser = user
             updateAuthUI(user)
         })
 
-        // Init UI
+        // Init UI dasar (bisa berjalan di semua halaman)
         initUI()
-        await loadCommunity()
+
+        // FIX: Hanya panggil loadCommunity jika elemennya memang ada di halaman ini!
+        if (document.getElementById('community-grid')) {
+            await loadCommunity()
+        }
 
     } catch (err) {
         console.error('❌ Boot error:', err)
@@ -115,6 +121,16 @@ window.handleLogin = async function () {
     }
 }
 
+async function getAuthToken() {
+    if (!currentUser) return null
+    try {
+        return await currentUser.getIdToken()
+    } catch (err) {
+        console.error('getAuthToken error:', err)
+        return null
+    }
+}
+
 window.handleLogout = async function () {
     try {
         await signOut(auth)
@@ -125,31 +141,44 @@ window.handleLogout = async function () {
         showToast('Gagal keluar. Coba lagi.', 'error')
     }
 }
-
 function updateAuthUI(user) {
     const btnLogin = document.getElementById('btn-login')
     const userInfo = document.getElementById('user-info')
     const userAvatar = document.getElementById('user-avatar')
     const userName = document.getElementById('user-name')
 
-    if (user) {
-        btnLogin.classList.add('hidden')
-        userInfo.classList.remove('hidden')
-        userAvatar.src = user.photoURL || ''
-        userAvatar.onerror = () => { userAvatar.style.display = 'none' }
-        userName.textContent = user.displayName || user.email || 'Traveler'
-    } else {
-        btnLogin.classList.remove('hidden')
-        userInfo.classList.add('hidden')
-    }
-}
+    // Elemen Tambahan: Target UI di dalam Hamburger/Mobile Menu
+    const mobileBtnLogin = document.getElementById('mobile-btn-login')
+    const mobileUserProfile = document.getElementById('mobile-user-profile')
+    const mobileUserAvatar = document.getElementById('mobile-user-avatar')
+    const mobileUserName = document.getElementById('mobile-user-name')
 
-async function getAuthToken() {
-    if (!currentUser) return null
-    try {
-        return await currentUser.getIdToken()
-    } catch {
-        return null
+    if (user) {
+        // Update UI Desktop (Gunakan opsional chaining/kondisional agar tidak crash jika null)
+        if (btnLogin) btnLogin.classList.add('hidden')
+        if (userInfo) userInfo.classList.remove('hidden')
+        if (userAvatar) {
+            userAvatar.src = user.photoURL || ''
+            userAvatar.onerror = () => { userAvatar.style.display = 'none' }
+        }
+        if (userName) userName.textContent = user.displayName || user.email || 'Traveler'
+
+        // Update UI Mobile Menu
+        if (mobileBtnLogin) mobileBtnLogin.classList.add('hidden')
+        if (mobileUserProfile) mobileUserProfile.classList.remove('hidden')
+        if (mobileUserAvatar) {
+            mobileUserAvatar.src = user.photoURL || ''
+            mobileUserAvatar.onerror = () => { mobileUserAvatar.style.display = 'none' }
+        }
+        if (mobileUserName) mobileUserName.textContent = user.displayName || user.email || 'Traveler'
+    } else {
+        // Update UI Desktop
+        if (btnLogin) btnLogin.classList.remove('hidden')
+        if (userInfo) userInfo.classList.add('hidden')
+
+        // Update UI Mobile Menu
+        if (mobileBtnLogin) mobileBtnLogin.classList.remove('hidden')
+        if (mobileUserProfile) mobileUserProfile.classList.add('hidden')
     }
 }
 
@@ -181,7 +210,29 @@ window.showTab = function (tab) {
     if (tab === 'mytrips') loadMyTrips()
     if (tab === 'community') loadCommunity()
 
+    // Close mobile menu when tab is clicked
+    const mobileMenu = document.getElementById('mobile-menu')
+    const hamburger = document.getElementById('hamburger-menu')
+    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.add('hidden')
+        hamburger?.classList.remove('active')
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Toggle Mobile Menu
+window.toggleMobileMenu = function () {
+    const mobileMenu = document.getElementById('mobile-menu')
+    const hamburger = document.getElementById('hamburger-menu')
+
+    if (mobileMenu.classList.contains('hidden')) {
+        mobileMenu.classList.remove('hidden')
+        hamburger.classList.add('active')
+    } else {
+        mobileMenu.classList.add('hidden')
+        hamburger.classList.remove('active')
+    }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -270,8 +321,8 @@ window.generateItinerary = async function () {
         const data = await resp.json()
         if (!resp.ok) throw new Error(data.error || 'Gagal menghasilkan itinerary.')
 
-        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData }
-        showResult(data.itineraryText, data.tripData)
+        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
+        showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
         showToast('✨ Itinerary berhasil dibuat!', 'success')
     } catch (err) {
         showError(err.message)
@@ -304,8 +355,8 @@ window.generateVision = async function () {
         const data = await resp.json()
         if (!resp.ok) throw new Error(data.error || 'Gagal menganalisis gambar.')
 
-        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData }
-        showResult(data.itineraryText, data.tripData)
+        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
+        showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
         showToast('📸 Foto berhasil dianalisis!', 'success')
     } catch (err) {
         showError(err.message)
@@ -330,7 +381,7 @@ function setGenerateLoading(mode, loading) {
 // ══════════════════════════════════════════════════════════════
 //  RESULT RENDERING
 // ══════════════════════════════════════════════════════════════
-function showResult(itineraryText, tripData) {
+function showResult(itineraryText, tripData, budgetBreakdown) {
     const section = document.getElementById('result-section')
     const body = document.getElementById('result-body')
     const meta = document.getElementById('result-meta')
@@ -343,6 +394,26 @@ function showResult(itineraryText, tripData) {
     if (tripData.budget) parts.push(`💰 ${tripData.budget}`)
     if (tripData.style) parts.push(`🧳 ${tripData.style}`)
     meta.innerHTML = parts.join(' &nbsp;·&nbsp; ')
+
+    // Set budget state
+    budgetData = budgetBreakdown
+    const tabBudget = document.getElementById('vtab-budget')
+    const containerBudget = document.querySelector('.budget-container')
+    const noDataBudget = document.getElementById('budget-no-data')
+
+    if (budgetData) {
+        if (tabBudget) tabBudget.classList.remove('hidden')
+        if (containerBudget) containerBudget.classList.remove('hidden')
+        if (noDataBudget) noDataBudget.classList.add('hidden')
+        if (budgetChartInstance) {
+            budgetChartInstance.destroy()
+            budgetChartInstance = null
+        }
+    } else {
+        if (tabBudget) tabBudget.classList.add('hidden')
+        if (containerBudget) containerBudget.classList.add('hidden')
+        if (noDataBudget) noDataBudget.classList.remove('hidden')
+    }
 
     section.classList.remove('hidden')
     section.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -628,12 +699,83 @@ async function openTripModal(trip) {
     const overlay = document.getElementById('modal-overlay')
     const body = document.getElementById('modal-body')
 
+    const dest = trip.tripData?.destination || 'Destinasi'
+    const duration = trip.tripData?.duration
+    const tripStyle = trip.tripData?.style
+    const budget = trip.tripData?.budget
+    const emoji = getDestEmoji(dest)
+    const date = formatDate(trip.createdAt)
+    const userName = trip.userName || 'Traveler'
+    const likes = trip.likes || 0
+    const isPublic = trip.isPublic
+    const isOwner = currentUser && currentUser.uid === trip.userId
+
+    let avatarHTML = ''
+    if (trip.userPhoto) {
+        avatarHTML = `<img class="modal-author-avatar" src="${trip.userPhoto}" alt="${userName}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+            <div class="modal-author-fallback" style="display:none">${userName[0].toUpperCase()}</div>`
+    } else {
+        avatarHTML = `<div class="modal-author-fallback">${userName[0].toUpperCase()}</div>`
+    }
+
+    const badges = [
+        duration ? `<span class="modal-badge"><span class="material-symbols-outlined">calendar_month</span>${duration} hari</span>` : '',
+        tripStyle ? `<span class="modal-badge"><span class="material-symbols-outlined">luggage</span>${tripStyle.split(' ')[0]}</span>` : '',
+        budget ? `<span class="modal-badge"><span class="material-symbols-outlined">payments</span>${budget.split(' ')[0]}</span>` : '',
+        isPublic ? `<span class="modal-badge modal-badge--public"><span class="material-symbols-outlined">public</span>Publik</span>` : '',
+    ].filter(Boolean).join('')
+
+    const ownerActions = isOwner ? `
+        <div class="modal-owner-actions">
+            <button class="modal-action-btn modal-action-toggle"
+                onclick="togglePublic('${trip.id}', ${!isPublic}, this)">
+                <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
+                ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
+            </button>
+            <button class="modal-action-btn modal-action-delete"
+                onclick="deleteTrip('${trip.id}', null); closeModal()">
+                <span class="material-symbols-outlined">delete</span>
+                Hapus
+            </button>
+        </div>` : ''
+
+    body.innerHTML = `
+        <div class="modal-trip-header">
+            <div class="modal-trip-banner">
+                <span class="modal-trip-emoji">${emoji}</span>
+                <div>
+                    <h2 class="modal-trip-dest">${dest}</h2>
+                </div>
+            </div>
+            <div class="modal-trip-meta">
+                ${badges ? `<div class="modal-badges">${badges}</div>` : ''}
+                <div class="modal-author-row">
+                    <div class="modal-author">
+                        ${avatarHTML}
+                        <span class="modal-author-name">${userName}</span>
+                        ${date ? `<span class="modal-author-sep">·</span><span class="modal-author-date">${date}</span>` : ''}
+                    </div>
+                    <button class="modal-like-btn" onclick="likeTrip('${trip.id}', this)">
+                        <span class="material-symbols-outlined">favorite</span>
+                        <span>${likes}</span>
+                    </button>
+                </div>
+                ${ownerActions}
+            </div>
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-itinerary-content" id="modal-itinerary-content">
+            <div class="modal-loading">
+                <div class="spinner" style="border-color:rgba(0,0,0,0.08);border-top-color:var(--rausch);width:24px;height:24px"></div>
+                <span>Memuat itinerary...</span>
+            </div>
+        </div>`
+
+    overlay.classList.remove('hidden')
+
     let itineraryText = trip.itineraryText
-
     if (!itineraryText || itineraryText.endsWith('...')) {
-        body.innerHTML = '<div style="text-align:center;padding:3rem"><div class="spinner" style="margin:auto;border-color:rgba(0,0,0,0.1);border-top-color:var(--teal-700)"></div></div>'
-        overlay.classList.remove('hidden')
-
         try {
             const token = currentUser ? await getAuthToken() : null
             const headers = token ? { Authorization: `Bearer ${token}` } : {}
@@ -641,11 +783,12 @@ async function openTripModal(trip) {
             const data = await resp.json()
             if (resp.ok) itineraryText = data.trip.itineraryText
         } catch { }
-    } else {
-        overlay.classList.remove('hidden')
     }
 
-    body.innerHTML = marked.parse(itineraryText || '*Konten tidak tersedia.*')
+    const contentEl = document.getElementById('modal-itinerary-content')
+    if (contentEl) {
+        contentEl.innerHTML = `<div class="modal-markdown">${marked.parse(itineraryText || '*Konten tidak tersedia.*')}</div>`
+    }
 }
 
 window.closeModal = function () {
@@ -837,19 +980,32 @@ function resetMapState() {
 /** Switch between Itinerary text view and Map view */
 window.switchResultView = function (view) {
     const itineraryView = document.getElementById('view-itinerary')
+    const budgetView = document.getElementById('view-budget')
     const mapView = document.getElementById('view-map')
     const tabItinerary = document.getElementById('vtab-itinerary')
+    const tabBudget = document.getElementById('vtab-budget')
     const tabMap = document.getElementById('vtab-map')
+
+    // Hide all views & remove active class from all tabs
+    itineraryView.classList.add('hidden')
+    if (budgetView) budgetView.classList.add('hidden')
+    mapView.classList.add('hidden')
+
+    tabItinerary.classList.remove('active')
+    if (tabBudget) tabBudget.classList.remove('active')
+    tabMap.classList.remove('active')
 
     if (view === 'itinerary') {
         itineraryView.classList.remove('hidden')
-        mapView.classList.add('hidden')
         tabItinerary.classList.add('active')
-        tabMap.classList.remove('active')
-    } else {
-        itineraryView.classList.add('hidden')
+    } else if (view === 'budget') {
+        if (budgetView) budgetView.classList.remove('hidden')
+        if (tabBudget) tabBudget.classList.add('active')
+        if (budgetData) {
+            renderBudgetChart(budgetData)
+        }
+    } else if (view === 'map') {
         mapView.classList.remove('hidden')
-        tabItinerary.classList.remove('active')
         tabMap.classList.add('active')
 
         // If map data is ready, render it; otherwise show loading
@@ -1090,3 +1246,158 @@ async function renderLeafletMap(days) {
 //  START APP
 // ══════════════════════════════════════════════════════════════
 boot()
+
+// ══════════════════════════════════════════════════════════════
+//  AI BUDGET ESTIMATION & CHART.JS RENDERER
+// ══════════════════════════════════════════════════════════════
+
+/** Helper to format number to Rupiah e.g., Rp 1.500.000 */
+function formatRupiah(amount) {
+    if (typeof amount !== 'number') return 'Rp 0'
+    return 'Rp ' + amount.toLocaleString('id-ID')
+}
+
+/** Render a premium budget Doughnut chart using Chart.js */
+function renderBudgetChart(data) {
+    if (!window.Chart) {
+        console.warn('Chart.js is not loaded yet.')
+        return
+    }
+
+    const canvas = document.getElementById('budget-chart')
+    if (!canvas) return
+
+    // 1. Destroy previous chart instance to prevent layout jumping/flickering
+    if (budgetChartInstance) {
+        budgetChartInstance.destroy()
+        budgetChartInstance = null
+    }
+
+    const categories = data.categories || []
+    const total = data.total || 0
+
+    // Curated rich warm tropical colors matching the design system
+    const CHART_COLORS = [
+        '#2a9d8f', // Teal
+        '#e85d3a', // Coral
+        '#d4a017', // Gold
+        '#457b9d', // Slate Blue
+        '#f4a261', // Soft Orange
+        '#9c27b0', // Purple
+        '#009688', // Green
+    ]
+
+    const labels = categories.map(c => c.name)
+    const amounts = categories.map(c => c.amount)
+    const bgColors = categories.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
+
+    // Update total display card
+    const totalDisplay = document.getElementById('budget-total-display')
+    if (totalDisplay) {
+        totalDisplay.innerHTML = `<span style="font-size: 0.9rem; font-family: var(--font-body); display: block; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;">Total Estimasi Anggaran</span>${formatRupiah(total)}`
+    }
+
+    // 2. Render summary table
+    const tableBody = document.getElementById('budget-table-body')
+    if (tableBody) {
+        tableBody.innerHTML = ''
+        categories.forEach((c, idx) => {
+            const color = CHART_COLORS[idx % CHART_COLORS.length]
+            const percentage = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0
+
+            const tr = document.createElement('tr')
+            tr.innerHTML = `
+                <td>
+                    <div class="budget-category-label">
+                        <span class="budget-category-dot" style="background: ${color}"></span>
+                        <span>${c.name}</span>
+                    </div>
+                    <div class="budget-table-bar-container">
+                        <div class="budget-table-bar" style="width: ${percentage}%; background: ${color};"></div>
+                    </div>
+                </td>
+                <td><strong>${formatRupiah(c.amount)}</strong></td>
+                <td style="color: var(--muted); font-weight: 600; text-align: right;">${percentage}%</td>
+            `
+            tableBody.appendChild(tr)
+        })
+    }
+
+    // 3. Configure Chart.js options
+    const ctx = canvas.getContext('2d')
+    budgetChartInstance = new window.Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: amounts,
+                backgroundColor: bgColors,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    display: false // We use custom interactive table legend instead
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(5, 46, 51, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    titleFont: { family: 'Source Sans 3', size: 13, weight: 'bold' },
+                    bodyFont: { family: 'Source Sans 3', size: 14 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    borderColor: 'rgba(212, 160, 23, 0.4)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function (context) {
+                            const val = context.raw || 0
+                            const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : 0
+                            return ` ${context.label}: ${formatRupiah(val)} (${percentage}%)`
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 800,
+                easing: 'easeOutQuart'
+            }
+        },
+        plugins: [{
+            id: 'centerText',
+            beforeDraw: function (chart) {
+                const width = chart.width
+                const height = chart.height
+                const ctx = chart.ctx
+
+                ctx.restore()
+                ctx.font = 'bold 15px "Source Sans 3"'
+                ctx.textBaseline = 'middle'
+                ctx.fillStyle = '#8a7b6e'
+
+                const text = 'Breakdown'
+                const textX = Math.round((width - ctx.measureText(text).width) / 2)
+                const textY = Math.round(height / 2 - 10)
+
+                ctx.fillText(text, textX, textY)
+
+                ctx.font = 'bold 17px "Source Sans 3"'
+                ctx.fillStyle = '#052e33'
+                const text2 = 'Anggaran'
+                const textX2 = Math.round((width - ctx.measureText(text2).width) / 2)
+                const textY2 = Math.round(height / 2 + 12)
+
+                ctx.fillText(text2, textX2, textY2)
+                ctx.save()
+            }
+        }]
+    })
+}

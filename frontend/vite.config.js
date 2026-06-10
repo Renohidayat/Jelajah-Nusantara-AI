@@ -15,5 +15,13 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         sourcemap: false,
+        rollupOptions: {
+            input: {
+                main: 'index.html',
+                tentang: 'tentang.html',
+                kontak: 'kontak.html',
+                privasi: 'privasi.html',
+            },
+        },
     },
 })
