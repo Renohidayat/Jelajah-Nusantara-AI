@@ -136,7 +136,11 @@ window.handleLogin = async function () {
         console.error('Login error:', err)
         // Abaikan error jika user menutup popup sendiri
         if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-            showToast('Gagal masuk. Coba lagi.', 'error')
+            if (err.code === 'auth/unauthorized-domain') {
+                showToast('Domain Vercel belum diizinkan di Firebase Console (Authorized Domains).', 'error')
+            } else {
+                showToast('Gagal masuk: ' + (err.message || 'Coba lagi.'), 'error')
+            }
         }
     }
 }
@@ -347,7 +351,13 @@ window.generateItinerary = async function () {
             body: JSON.stringify({ origin, destination, duration, budget, style }),
         })
 
-        const data = await resp.json()
+        let data
+        const text = await resp.text()
+        try {
+            data = JSON.parse(text)
+        } catch {
+            throw new Error(!resp.ok ? `Server sedang memproses atau sibuk (HTTP ${resp.status}). Coba beberapa saat lagi.` : 'Respon server tidak valid.')
+        }
         if (!resp.ok) throw new Error(data.error || 'Gagal menghasilkan itinerary.')
 
         lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
@@ -387,7 +397,13 @@ window.generateVision = async function () {
             body: formData,
         })
 
-        const data = await resp.json()
+        let data
+        const text = await resp.text()
+        try {
+            data = JSON.parse(text)
+        } catch {
+            throw new Error(!resp.ok ? `Server sedang memproses atau sibuk (HTTP ${resp.status}). Coba beberapa saat lagi.` : 'Respon server tidak valid.')
+        }
         if (!resp.ok) throw new Error(data.error || 'Gagal menganalisis gambar.')
 
         lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
