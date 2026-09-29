@@ -1,22 +1,25 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const apiKey = process.env.OPENAGENTIC_API_KEY || process.env.GEMINI_API_KEY;
+const isGemini = !process.env.OPENAGENTIC_API_KEY && !!process.env.GEMINI_API_KEY;
+
 export const aiConfig = {
-    apiKey: process.env.OPENAGENTIC_API_KEY,
-    baseUrl: process.env.OPENAGENTIC_BASE_URL || "https://openagentic.id/api/v1",
-    model: process.env.AI_MODEL || "deepseek-v4.1-flash-free",
+    apiKey: apiKey,
+    baseUrl: isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai" : (process.env.OPENAGENTIC_BASE_URL || "https://openagentic.id/api/v1"),
+    model: isGemini ? "gemini-2.0-flash" : (process.env.AI_MODEL || "deepseek-v4.1-flash-free"),
     fallbackModels: (process.env.AI_FALLBACK_MODELS || "").split(",").map(m => m.trim()).filter(Boolean),
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "60000", 10),
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || "2", 10),
     visionEnabled: process.env.AI_VISION_ENABLED !== "false",
-    visionModel: process.env.AI_VISION_MODEL || process.env.AI_MODEL || "deepseek-v4.1-flash-free",
+    visionModel: isGemini ? "gemini-2.0-flash" : (process.env.AI_VISION_MODEL || process.env.AI_MODEL || "deepseek-v4.1-flash-free"),
     visionFallbackModels: (process.env.AI_VISION_FALLBACK_MODELS || "").split(",").map(m => m.trim()).filter(Boolean),
     maxImageBytes: parseInt(process.env.AI_MAX_IMAGE_BYTES || "5242880", 10) // default 5MB
 };
 
 // Check key at startup
 if (!aiConfig.apiKey) {
-    console.error("❌ Kritis: OPENAGENTIC_API_KEY tidak diatur di environment.");
+    console.error("❌ Kritis: OPENAGENTIC_API_KEY atau GEMINI_API_KEY tidak diatur di environment.");
     // Don't process.exit on serverless environments
 }
 
