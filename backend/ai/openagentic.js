@@ -17,7 +17,7 @@ export const aiConfig = {
 // Check key at startup
 if (!aiConfig.apiKey) {
     console.error("❌ Kritis: OPENAGENTIC_API_KEY tidak diatur di environment.");
-    process.exit(1);
+    // Don't process.exit on serverless environments
 }
 
 // Optional async check models without blocking

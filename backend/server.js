@@ -49,7 +49,7 @@ try {
     console.log("✅ Firebase Admin initialized successfully.");
 } catch (err) {
     console.error("❌ Firebase Admin initialization failed:", err.message);
-    process.exit(1);
+    // Don't process.exit on serverless environments to avoid generic 500 errors
 }
 
 // OpenAgentic AI Initialization is handled in backend/ai/openagentic.js
