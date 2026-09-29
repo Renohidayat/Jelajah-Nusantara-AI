@@ -329,14 +329,19 @@ app.get("/api/config", (_req, res) => {
         measurementId: process.env.FIREBASE_MEASUREMENT_ID,
         visionEnabled: process.env.AI_VISION_ENABLED !== 'false' };
 
-    // Validate all keys are present before sending
-    const missing = Object.entries(config)
-        .filter(([, v]) => !v)
-        .map(([k]) => k);
+    // Validate mandatory keys before sending
+    const mandatoryKeys = ['apiKey', 'projectId', 'appId'];
+    const missing = mandatoryKeys.filter(k => !config[k]);
 
     if (missing.length > 0) {
-        console.error("❌ Missing Firebase config env vars:", missing);
-        return res.status(500).json({ error: "Server misconfiguration: missing Firebase keys." });
+        console.error("❌ Missing mandatory Firebase config env vars:", missing);
+        return res.status(500).json({ error: "Server misconfiguration: missing mandatory Firebase keys: " + missing.join(", ") });
+    }
+    
+    // Log warning for optional keys but don't crash
+    const missingOptional = Object.entries(config).filter(([k, v]) => !v && !mandatoryKeys.includes(k)).map(([k]) => k);
+    if (missingOptional.length > 0) {
+        console.warn("⚠️ Missing optional Firebase config env vars:", missingOptional);
     }
 
     res.json(config);
