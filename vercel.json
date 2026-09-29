@@ -23,5 +23,10 @@
         "service": "frontend"
       }
     }
-  ]
+  ],
+  "functions": {
+    "backend/**/*.js": {
+      "maxDuration": 60
+    }
+  }
 }
