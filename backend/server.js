@@ -659,3 +659,6 @@ app.listen(PORT, () => {
     console.log(`   ├─ Vision  : POST /api/generate-vision`);
     console.log(`   └─ Trips   : CRUD /api/itineraries\n`);
 });
+
+// ✅ Wajib untuk deploy Vercel Serverless
+export default app;
