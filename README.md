@@ -2,7 +2,7 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?style=flat-square&logo=node.js)](https://nodejs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-Admin%20SDK-orange?style=flat-square&logo=firebase)](https://firebase.google.com/)
-[![Google Generative AI](https://img.shields.io/badge/Google%20Generative%20AI-Gemini-blue?style=flat-square&logo=google)](https://ai.google.dev/)
+[![Google Generative AI](https://img.shields.io/badge/Google%20Generative%20AI-openagentic-blue?style=flat-square&logo=google)](https://ai.google.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5.3-purple?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 
@@ -12,7 +12,7 @@
 
 ## 🎯 Overview
 
-**Jelajah Nusantara** adalah platform web yang menggunakan AI (Google Gemini) untuk membantu traveler merencanakan perjalanan mereka di Indonesia. Platform ini menyediakan:
+**Jelajah Nusantara** adalah platform web yang menggunakan AI (OpenAgentic) untuk membantu traveler merencanakan perjalanan mereka di Indonesia. Platform ini menyediakan:
 
 - ✅ **Perencanaan Itinerary Cerdas** - AI menghasilkan rencana perjalanan berdasarkan preferensi pengguna
 - ✅ **Visualisasi Peta Interaktif** - Tampilkan destinasi di peta real-time
@@ -39,7 +39,7 @@
 - **Node.js 18+** - JavaScript runtime
 - **Express.js 4.19** - Web framework
 - **Firebase Admin SDK** - Server-side Firebase management
-- **Google Generative AI** - Gemini AI integration
+- **Google Generative AI** - OpenAgentic AI integration
 - **Multer** - File upload handling
 - **CORS** - Cross-origin resource sharing
 - **dotenv** - Environment variable management
@@ -83,7 +83,7 @@ Pastikan sudah menginstall:
    cd ..
    ```
 
-3. **Setup Firebase & Gemini API (lihat bagian berikutnya)**
+3. **Setup Firebase & openagentic API (lihat bagian berikutnya)**
 
 ---
 
@@ -104,7 +104,7 @@ Pastikan sudah menginstall:
    - Click "Generate New Private Key"
    - Download file JSON
 
-### 2. Google Generative AI (Gemini) Setup
+### 2. Google Generative AI (openagentic) Setup
 
 1. **Buka [Google AI Studio](https://aistudio.google.com/)**
 2. **Get API Key:**
@@ -125,7 +125,7 @@ FIREBASE_CLIENT_ID=your_client_id
 FIREBASE_CLIENT_CERT_URL=your_cert_url
 
 # Google Generative AI
-GEMINI_API_KEY=your_gemini_api_key
+OPENAGENTIC_API_KEY=your_openagentic_api_key
 
 # Server
 PORT=8080
@@ -202,7 +202,7 @@ docker run -p 8080:8080 \
   -e FIREBASE_CLIENT_EMAIL=your_email \
   -e FIREBASE_CLIENT_ID=your_id \
   -e FIREBASE_CLIENT_CERT_URL=your_url \
-  -e GEMINI_API_KEY=your_api_key \
+  -e OPENAGENTIC_API_KEY=your_api_key \
   jelajah-nusantara:latest
 ```
 
@@ -220,7 +220,7 @@ gcloud run deploy jelajah-nusantara \
   --image gcr.io/PROJECT_ID/jelajah-nusantara:latest \
   --platform managed \
   --region us-central1 \
-  --set-env-vars "FIREBASE_PROJECT_ID=...,GEMINI_API_KEY=..."
+  --set-env-vars "FIREBASE_PROJECT_ID=...,OPENAGENTIC_API_KEY=..."
 ```
 
 Atau gunakan file `cloudrun.yaml` untuk deployment lebih mudah.
@@ -361,12 +361,12 @@ curl -X POST http://localhost:8080/api/generate-itinerary \
 - Check private key format (harus escaped newlines)
 - Verify di Firebase Console
 
-### Gemini API Error
+### openagentic API Error
 ```
 401 UNAUTHENTICATED: API Key not valid
 ```
 **Solusi:**
-- Verify `GEMINI_API_KEY` di `.env`
+- Verify `OPENAGENTIC_API_KEY` di `.env`
 - Check API key di [Google AI Studio](https://aistudio.google.com/)
 - Ensure Generative AI API is enabled
 
@@ -432,7 +432,7 @@ Jika ingin belajar dari project ini:
 1. **Frontend Development**: Vanilla ES6 + Vite + Firebase SDK
 2. **Backend Development**: Express.js + Firebase Admin + AI Integration
 3. **DevOps**: Docker containerization & Cloud Run deployment
-4. **AI Integration**: Google Gemini API untuk travel planning
+4. **AI Integration**: OpenAgentic API untuk travel planning
 
 ---
 
@@ -497,5 +497,5 @@ npm run deploy:cloudrun    # Deploy ke Google Cloud Run
 
 ---
 
-**Last Updated**: June 2026
+**Last Updated**: June 2024  
 **Version**: 1.0.0

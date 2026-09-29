@@ -5,6 +5,15 @@
 // ════════════════════════════════════════════════════════════════
 
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
+// Configure DOMPurify for external links
+DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+    if (node.nodeName && node.nodeName.toLowerCase() === 'a') {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+    }
+});
 import { initializeApp } from 'firebase/app'
 import {
     getAuth,
@@ -19,7 +28,7 @@ import {
 // ──────────────────────────────────────────────────────────────
 //  CONFIG & GLOBALS
 // ──────────────────────────────────────────────────────────────
-const API_BASE = '' // Vite proxies /api → localhost:8080
+const API_BASE = import.meta.env.VITE_API_BASE || '' // Vite proxies /api → localhost:8080
 
 let firebaseApp = null
 let auth = null
@@ -90,6 +99,17 @@ async function boot() {
         // FIX: Hanya panggil loadCommunity jika elemennya memang ada di halaman ini!
         if (document.getElementById('community-grid')) {
             await loadCommunity()
+        }
+
+        // Hide vision feature if disabled
+        if (firebaseConfig.visionEnabled === false) {
+            const visionTabBtn = document.querySelector('[data-tab="vision"]');
+            if (visionTabBtn) {
+                visionTabBtn.style.display = 'none';
+                if (visionTabBtn.classList.contains('active')) {
+                    switchTab('text');
+                }
+            }
         }
 
     } catch (err) {
@@ -294,7 +314,11 @@ function processFile(file) {
 // ══════════════════════════════════════════════════════════════
 //  AI GENERATION — Text Mode
 // ══════════════════════════════════════════════════════════════
+let isGenerating = false;
+
 window.generateItinerary = async function () {
+    if (isGenerating) return;
+    
     const origin = document.getElementById('origin').value.trim()
     const destination = document.getElementById('destination').value.trim()
     const duration = document.getElementById('duration').value
@@ -310,11 +334,16 @@ window.generateItinerary = async function () {
     hideError()
     setGenerateLoading('text', true)
     hideResult()
+    isGenerating = true;
 
     try {
+        const token = await getAuthToken()
+        const headers = { 'Content-Type': 'application/json' }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
         const resp = await fetch(`${API_BASE}/api/generate`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ origin, destination, duration, budget, style }),
         })
 
@@ -327,6 +356,7 @@ window.generateItinerary = async function () {
     } catch (err) {
         showError(err.message)
     } finally {
+        isGenerating = false;
         setGenerateLoading('text', false)
     }
 }
@@ -347,8 +377,13 @@ window.generateVision = async function () {
         formData.append('image', selectedFile)
         if (hint) formData.append('destination', hint)
 
+        const token = await getAuthToken()
+        const headers = {}
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
         const resp = await fetch(`${API_BASE}/api/generate-vision`, {
             method: 'POST',
+            headers,
             body: formData,
         })
 
@@ -386,14 +421,14 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
     const body = document.getElementById('result-body')
     const meta = document.getElementById('result-meta')
 
-    body.innerHTML = marked.parse(itineraryText)
+    body.innerHTML = DOMPurify.sanitize(marked.parse(itineraryText))
 
     const parts = []
     if (tripData.destination) parts.push(`🏝️ <strong>${tripData.destination}</strong>`)
     if (tripData.duration) parts.push(`📅 ${tripData.duration} hari`)
     if (tripData.budget) parts.push(`💰 ${tripData.budget}`)
     if (tripData.style) parts.push(`🧳 ${tripData.style}`)
-    meta.innerHTML = parts.join(' &nbsp;·&nbsp; ')
+    meta.innerHTML = DOMPurify.sanitize(parts.join(' &nbsp;·&nbsp; '))
 
     // Set budget state
     budgetData = budgetBreakdown
@@ -661,7 +696,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
       </div>`
     }
 
-    card.innerHTML = `
+    card.innerHTML = DOMPurify.sanitize(`
     <div class="trip-card-banner">
       <div class="trip-card-banner-inner">${emoji}</div>
       <div class="trip-card-dest">${dest}</div>
@@ -686,7 +721,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
         </div>
       </div>
       ${actionsHTML}
-    </div>`
+    </div>`)
 
     card.addEventListener('click', () => openTripModal(trip))
     return card
@@ -740,7 +775,7 @@ async function openTripModal(trip) {
             </button>
         </div>` : ''
 
-    body.innerHTML = `
+    body.innerHTML = DOMPurify.sanitize(`
         <div class="modal-trip-header">
             <div class="modal-trip-banner">
                 <span class="modal-trip-emoji">${emoji}</span>
@@ -770,7 +805,7 @@ async function openTripModal(trip) {
                 <div class="spinner" style="border-color:rgba(0,0,0,0.08);border-top-color:var(--rausch);width:24px;height:24px"></div>
                 <span>Memuat itinerary...</span>
             </div>
-        </div>`
+        </div>`)
 
     overlay.classList.remove('hidden')
 
@@ -787,7 +822,7 @@ async function openTripModal(trip) {
 
     const contentEl = document.getElementById('modal-itinerary-content')
     if (contentEl) {
-        contentEl.innerHTML = `<div class="modal-markdown">${marked.parse(itineraryText || '*Konten tidak tersedia.*')}</div>`
+        contentEl.innerHTML = DOMPurify.sanitize(`<div class="modal-markdown">${marked.parse(itineraryText || '*Konten tidak tersedia.*')}</div>`)
     }
 }
 
@@ -1030,9 +1065,13 @@ async function fetchAndRenderMap(itineraryText, duration) {
 
     while (attempt <= MAX_CLIENT_RETRIES) {
         try {
+            const token = await getAuthToken()
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers['Authorization'] = `Bearer ${token}`
+
             const resp = await fetch(`${API_BASE}/api/extract-locations`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ itineraryText, duration }),
             })
 
@@ -1187,14 +1226,14 @@ async function renderLeafletMap(days) {
             const icon = buildMarkerIcon(color, markerLabel, L)
             const timeIcon = TIME_ICONS[loc.time] || '📍'
 
-            const popupContent = `
+            const popupContent = DOMPurify.sanitize(`
                 <div class="map-popup">
                     <div class="map-popup-header" style="border-left: 3px solid ${color}">
                         <span class="map-popup-day">Hari ${day.day} · ${timeIcon} ${loc.time || ''}</span>
                         <strong class="map-popup-name">${loc.name}</strong>
                     </div>
                     ${loc.description ? `<p class="map-popup-desc">${loc.description}</p>` : ''}
-                </div>`
+                </div>`)
 
             L.marker(pos, { icon })
                 .addTo(leafletMap)
@@ -1215,12 +1254,12 @@ async function renderLeafletMap(days) {
         // ── Build legend entry ──
         const legendItem = document.createElement('div')
         legendItem.className = 'map-legend-day'
-        legendItem.innerHTML = `
+        legendItem.innerHTML = DOMPurify.sanitize(`
             <span class="map-legend-dot" style="background:${color}"></span>
             <span class="map-legend-label">
                 <strong>Hari ${day.day}</strong>${day.theme ? ` — ${day.theme}` : ''}
             </span>
-            <span class="map-legend-count">${day.locations.length} lokasi</span>`
+            <span class="map-legend-count">${day.locations.length} lokasi</span>`)
         legendDays.appendChild(legendItem)
     })
 
@@ -1294,7 +1333,7 @@ function renderBudgetChart(data) {
     // Update total display card
     const totalDisplay = document.getElementById('budget-total-display')
     if (totalDisplay) {
-        totalDisplay.innerHTML = `<span style="font-size: 0.9rem; font-family: var(--font-body); display: block; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;">Total Estimasi Anggaran</span>${formatRupiah(total)}`
+        totalDisplay.innerHTML = DOMPurify.sanitize(`<span style="font-size: 0.9rem; font-family: var(--font-body); display: block; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;">Total Estimasi Anggaran</span>${formatRupiah(total)}`)
     }
 
     // 2. Render summary table
@@ -1306,7 +1345,7 @@ function renderBudgetChart(data) {
             const percentage = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0
 
             const tr = document.createElement('tr')
-            tr.innerHTML = `
+            tr.innerHTML = DOMPurify.sanitize(`
                 <td>
                     <div class="budget-category-label">
                         <span class="budget-category-dot" style="background: ${color}"></span>
@@ -1318,7 +1357,7 @@ function renderBudgetChart(data) {
                 </td>
                 <td><strong>${formatRupiah(c.amount)}</strong></td>
                 <td style="color: var(--muted); font-weight: 600; text-align: right;">${percentage}%</td>
-            `
+            `)
             tableBody.appendChild(tr)
         })
     }

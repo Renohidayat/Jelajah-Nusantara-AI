@@ -30,7 +30,7 @@ cd frontend && npm install && cd ..
 # Backend
 cd backend
 cp .env.example .env
-# Edit .env dengan Firebase & Gemini API keys Anda
+# Edit .env dengan Firebase & openagentic API keys Anda
 code .env
 
 # Frontend (opsional)
@@ -103,7 +103,7 @@ docker build -t jelajah-nusantara:latest .
 # Run container
 docker run -p 8080:8080 \
   -e FIREBASE_PROJECT_ID=xxx \
-  -e GEMINI_API_KEY=xxx \
+  -e OPENAGENTIC_API_KEY=xxx \
   jelajah-nusantara:latest
 
 # Stop container
@@ -139,7 +139,7 @@ ls -la backend/.env
 # https://console.firebase.google.com/ → Project Settings → Service Accounts
 ```
 
-### Issue: "GEMINI_API_KEY not valid"
+### Issue: "OPENAGENTIC_API_KEY not valid"
 ```bash
 # Solution: Get new API key from Google AI Studio
 # https://aistudio.google.com/ → Get API Key
@@ -198,12 +198,12 @@ LICENSE               # MIT License
 
 **Important:** PRIVATE_KEY harus memiliki literal `\n` newlines, bukan `\\n`
 
-### Gemini API
+### openagentic API
 
 1. Go to [Google AI Studio](https://aistudio.google.com/)
 2. Click "Get API Key"
 3. Create new key
-4. Copy ke `GEMINI_API_KEY`
+4. Copy ke `OPENAGENTIC_API_KEY`
 
 ---
 
@@ -257,7 +257,7 @@ LICENSE               # MIT License
 - [ ] Frontend builds without errors
 - [ ] Backend server starts properly
 - [ ] Firebase connection works
-- [ ] Gemini API working
+- [ ] openagentic API working
 - [ ] CORS configured
 - [ ] .env added to .gitignore
 

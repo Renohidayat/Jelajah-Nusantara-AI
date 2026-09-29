@@ -9,8 +9,8 @@ FIREBASE_MESSAGING_SENDER_ID: ${FIREBASE_MESSAGING_SENDER_ID}
 FIREBASE_APP_ID: ${FIREBASE_APP_ID}
 FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID}
 
-# Gemini API Keys (use environment variables in production)
-GEMINI_API_KEY: ${GEMINI_API_KEY}
+# openagentic API Keys (use environment variables in production)
+OPENAGENTIC_API_KEY: ${OPENAGENTIC_API_KEY}
 
 # Deployment Configuration
 ALLOWED_ORIGINS: https://jelajah-nusantara-ai-773661753585.asia-southeast2.run.app
