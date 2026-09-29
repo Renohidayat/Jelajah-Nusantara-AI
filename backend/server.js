@@ -76,10 +76,21 @@ app.use(
         origin: (origin, callback) => {
             // Allow requests with no origin (e.g. mobile apps, curl, Postman)
             if (!origin) return callback(null, true);
+            
+            // Allow if origin is explicitly in ALLOWED_ORIGINS
             if (ALLOWED_ORIGINS.includes(origin)) {
                 return callback(null, true);
             }
-            callback(new Error(`CORS policy: Origin ${origin} not allowed.`));
+            
+            // Allow any Vercel preview or production deployments automatically
+            if (origin.endsWith('.vercel.app')) {
+                return callback(null, true);
+            }
+            
+            console.warn(`⚠️ CORS blocked for origin: ${origin}`);
+            // Don't throw Error to avoid triggering 500 Global Error Handler
+            // Instead, pass false to reject CORS gracefully
+            callback(null, false);
         },
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
