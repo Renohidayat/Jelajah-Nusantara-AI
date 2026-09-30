@@ -6,6 +6,7 @@
 
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { createIcons, icons } from 'lucide'
 
 // Configure DOMPurify for external links
 DOMPurify.addHook('afterSanitizeAttributes', function(node) {
@@ -95,6 +96,11 @@ async function boot() {
 
         // Init UI dasar (bisa berjalan di semua halaman)
         initUI()
+        
+        // Render lucide icons
+        if (typeof createIcons !== 'undefined') {
+            createIcons({ icons })
+        }
 
         // FIX: Hanya panggil loadCommunity jika elemennya memang ada di halaman ini!
         if (document.getElementById('community-grid')) {
