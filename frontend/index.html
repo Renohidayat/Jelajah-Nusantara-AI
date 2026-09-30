@@ -9,7 +9,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF385C'><path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/></svg>" />
 
     <!-- Fonts: Inter as Cereal substitute per DESIGN.md -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -117,9 +117,8 @@
                     alt="Indonesia" />
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
-                    <h1 class="hero-title">Rancang Petualangan<br />Indonesia Anda.</h1>
-                    <p class="hero-subtitle">Gunakan kecerdasan buatan untuk menyusun rencana perjalanan<br />yang
-                        dipersonalisasi di seluruh kepulauan.</p>
+                    <h1 class="hero-title">Rencanakan perjalanan<br />impianmu di Indonesia.</h1>
+                    <p class="hero-subtitle">AI membantu menyusun itinerary personal di seluruh Nusantara.</p>
                 </div>
             </div>
 
@@ -212,8 +211,8 @@
                 <!-- VISION MODE FORM -->
                 <div class="planner-card hidden" id="form-vision">
                     <div class="card-header">
-                        <h2>Upload Foto Destinasi</h2>
-                        <p>Unggah foto tempat wisata dan AI akan mengidentifikasi serta membuat itinerary untukmu</p>
+                        <h2>Kenali dari foto</h2>
+                        <p>Unggah foto tempat wisata — AI akan mengenali lokasinya dan membuat rencana perjalanan.</p>
                     </div>
 
                     <div class="upload-area" id="upload-area" ondrop="handleDrop(event)"
@@ -281,7 +280,7 @@
                         <div class="weather-widget-inner">
                             <div class="weather-info-box">
                                 <div class="weather-temp-row">
-                                    <span class="weather-icon" id="weather-icon">☀️</span>
+                                    <span class="weather-icon" id="weather-icon"><span class="material-symbols-outlined">wb_sunny</span></span>
                                     <span class="weather-temp" id="weather-temp">--°C</span>
                                 </div>
                                 <div class="weather-meta-row">
@@ -291,7 +290,7 @@
                             </div>
                             <div class="weather-divider"></div>
                             <div class="weather-ai-rec-box">
-                                <span class="weather-ai-badge">✨ REKOMENDASI CUACA AI</span>
+                                <span class="weather-ai-badge"><span class="material-symbols-outlined">auto_awesome</span> Rekomendasi Cuaca AI</span>
                                 <p class="weather-ai-text" id="weather-ai-text">Memproses rekomendasi perjalanan
                                     berdasarkan cuaca saat ini...</p>
                             </div>
@@ -323,7 +322,7 @@
                         <div class="budget-container">
                             <div class="budget-chart-wrapper">
                                 <div class="budget-chart-card">
-                                    <h3 class="budget-chart-title">📊 Breakdown Anggaran</h3>
+                                    <h3 class="budget-chart-title"><span class="material-symbols-outlined">bar_chart</span> Breakdown Anggaran</h3>
                                     <div class="budget-chart-canvas-wrap">
                                         <canvas id="budget-chart"></canvas>
                                     </div>
@@ -331,7 +330,7 @@
                             </div>
                             <div class="budget-summary-wrapper">
                                 <div class="budget-summary-card">
-                                    <h3 class="budget-summary-title">💰 Ringkasan Biaya</h3>
+                                    <h3 class="budget-summary-title"><span class="material-symbols-outlined">account_balance_wallet</span> Ringkasan Biaya</h3>
                                     <div class="budget-total-display" id="budget-total-display"></div>
                                     <table class="budget-table" id="budget-table">
                                         <thead>
@@ -347,7 +346,7 @@
                             </div>
                         </div>
                         <div class="budget-no-data hidden" id="budget-no-data">
-                            <div class="budget-no-data-icon">💸</div>
+                            <div class="budget-no-data-icon"><span class="material-symbols-outlined">account_balance_wallet</span></div>
                             <p>Data anggaran tidak tersedia untuk itinerary ini.</p>
                         </div>
                     </div>
@@ -356,17 +355,16 @@
                     <div id="view-map" class="hidden">
                         <div class="map-loading-state hidden" id="map-loading-state">
                             <div class="spinner" style="margin: 0 auto;"></div>
-                            <p class="map-loading-text">✨ AI sedang mengekstrak lokasi dari itinerary...</p>
+                            <p class="map-loading-text">AI sedang mengekstrak lokasi dari itinerary…</p>
                         </div>
                         <div class="map-error-state hidden" id="map-error-state">
-                            <span class="map-error-icon">🗺️</span>
+                            <span class="map-error-icon"><span class="material-symbols-outlined">map</span></span>
                             <p id="map-error-msg">Gagal memuat peta.</p>
-                            <button class="btn-regen" onclick="retryMapExtraction()" style="margin-top:1rem">🔄 Coba
-                                Lagi</button>
+                            <button class="btn-regen" onclick="retryMapExtraction()" style="margin-top:1rem"><span class="material-symbols-outlined">refresh</span> Coba Lagi</button>
                         </div>
                         <div id="route-map" class="route-map-container hidden"></div>
                         <div class="map-legend hidden" id="map-legend">
-                            <h4 class="map-legend-title">🗓️ Rute Perjalanan</h4>
+                            <h4 class="map-legend-title"><span class="material-symbols-outlined">route</span> Rute Perjalanan</h4>
                             <div class="map-legend-days" id="map-legend-days"></div>
                         </div>
                     </div>

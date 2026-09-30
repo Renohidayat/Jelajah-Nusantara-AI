@@ -113,7 +113,7 @@ async function boot() {
         }
 
     } catch (err) {
-        console.error('❌ Boot error:', err)
+        console.error('Boot error:', err)
         showToast('Gagal terhubung ke server. Coba refresh halaman.', 'error')
     }
 }
@@ -131,7 +131,7 @@ window.handleLogin = async function () {
         // Gunakan popup — tidak redirect keluar halaman, tidak ada race condition
         const result = await signInWithPopup(auth, provider)
         // onAuthStateChanged akan otomatis update UI
-        showToast(`Selamat datang, ${result.user.displayName?.split(' ')[0] || 'Traveler'}! 🎉`, 'success')
+        showToast(`Selamat datang, ${result.user.displayName?.split(' ')[0] || 'Traveler'}!`, 'success')
     } catch (err) {
         console.error('Login error:', err)
         // Abaikan error jika user menutup popup sendiri
@@ -160,7 +160,7 @@ window.handleLogout = async function () {
         await signOut(auth)
         currentUser = null
         updateAuthUI(null)
-        showToast('Kamu berhasil keluar. Sampai jumpa! 👋')
+        showToast('Kamu berhasil keluar. Sampai jumpa!')
     } catch (err) {
         showToast('Gagal keluar. Coba lagi.', 'error')
     }
@@ -362,7 +362,7 @@ window.generateItinerary = async function () {
 
         lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
         showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
-        showToast('✨ Itinerary berhasil dibuat!', 'success')
+        showToast('Itinerary berhasil dibuat!', 'success')
     } catch (err) {
         showError(err.message)
     } finally {
@@ -408,7 +408,7 @@ window.generateVision = async function () {
 
         lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
         showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
-        showToast('📸 Foto berhasil dianalisis!', 'success')
+        showToast('Foto berhasil dianalisis!', 'success')
     } catch (err) {
         showError(err.message)
     } finally {
@@ -440,10 +440,10 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
     body.innerHTML = DOMPurify.sanitize(marked.parse(itineraryText))
 
     const parts = []
-    if (tripData.destination) parts.push(`🏝️ <strong>${tripData.destination}</strong>`)
-    if (tripData.duration) parts.push(`📅 ${tripData.duration} hari`)
-    if (tripData.budget) parts.push(`💰 ${tripData.budget}`)
-    if (tripData.style) parts.push(`🧳 ${tripData.style}`)
+    if (tripData.destination) parts.push(`<span class="material-symbols-outlined">location_on</span> <strong>${tripData.destination}</strong>`)
+    if (tripData.duration) parts.push(`<span class="material-symbols-outlined">calendar_month</span> ${tripData.duration} hari`)
+    if (tripData.budget) parts.push(`<span class="material-symbols-outlined">payments</span> ${tripData.budget}`)
+    if (tripData.style) parts.push(`<span class="material-symbols-outlined">luggage</span> ${tripData.style}`)
     meta.innerHTML = DOMPurify.sanitize(parts.join(' &nbsp;·&nbsp; '))
 
     // Set budget state
@@ -506,7 +506,7 @@ window.saveItinerary = async function () {
     if (!token) return showToast('Token tidak valid. Coba login ulang.', 'error')
 
     btnSave.disabled = true
-    btnSave.textContent = '💾 Menyimpan...'
+    btnSave.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">hourglass_top</span> Menyimpan…'
 
     try {
         const resp = await fetch(`${API_BASE}/api/itineraries`, {
@@ -525,21 +525,16 @@ window.saveItinerary = async function () {
         const data = await resp.json()
         if (!resp.ok) throw new Error(data.error || 'Gagal menyimpan.')
 
-        showToast('✅ Itinerary berhasil disimpan!', 'success')
-        btnSave.textContent = '✅ Tersimpan'
+        showToast('Itinerary berhasil disimpan!', 'success')
+        btnSave.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Tersimpan'
         setTimeout(() => {
             btnSave.disabled = false
-            btnSave.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg> Simpan Itinerary`
+            btnSave.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">bookmark</span> Simpan`
         }, 3000)
     } catch (err) {
         showToast(err.message, 'error')
         btnSave.disabled = false
-        btnSave.innerHTML = '💾 Simpan Itinerary'
+        btnSave.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">bookmark</span> Simpan'
     }
 }
 
@@ -549,7 +544,7 @@ window.saveItinerary = async function () {
 window.shareItinerary = async function () {
     if (!lastResult) return
 
-    const shareText = `✈️ Cek itinerary perjalanan ke ${lastResult.tripData?.destination || 'Indonesia'} yang aku buat di Jelajah Nusantara!\n\n${window.location.href}`
+    const shareText = `Cek itinerary perjalanan ke ${lastResult.tripData?.destination || 'Indonesia'} yang aku buat di Jelajah Nusantara!\n\n${window.location.href}`
 
     if (navigator.share) {
         try {
@@ -557,7 +552,7 @@ window.shareItinerary = async function () {
         } catch { }
     } else {
         await navigator.clipboard.writeText(shareText)
-        showToast('📋 Link berhasil disalin!', 'success')
+        showToast('Link berhasil disalin!', 'success')
     }
 }
 
@@ -649,21 +644,22 @@ async function loadCommunity() {
 // ══════════════════════════════════════════════════════════════
 //  TRIP CARD RENDERER
 // ══════════════════════════════════════════════════════════════
-const DESTINATION_EMOJI = {
-    bali: '🌺', lombok: '🏖️', raja: '🐠', komodo: '🦎',
-    labuan: '🏊', bromo: '🌋', semeru: '⛰️', yogya: '🏛️',
-    jogja: '🏛️', solo: '🎭', semarang: '🏙️', surabaya: '🌆',
-    jakarta: '🏙️', bandung: '🌿', medan: '🍜', manado: '🐟',
-    makassar: '🌊', flores: '🌸', toraja: '⚰️', wakatobi: '🐙',
-    default: '✈️',
+// Material Symbols icon names for destinations
+const DESTINATION_ICONS = {
+    bali: 'spa', lombok: 'beach_access', raja: 'scuba_diving', komodo: 'pets',
+    labuan: 'pool', bromo: 'landscape', semeru: 'terrain', yogya: 'account_balance',
+    jogja: 'account_balance', solo: 'theater_comedy', semarang: 'location_city', surabaya: 'location_city',
+    jakarta: 'location_city', bandung: 'park', medan: 'restaurant', manado: 'scuba_diving',
+    makassar: 'water', flores: 'eco', toraja: 'account_balance', wakatobi: 'scuba_diving',
+    default: 'flight',
 }
 
-function getDestEmoji(destination = '') {
+function getDestIcon(destination = '') {
     const lower = destination.toLowerCase()
-    for (const [key, emoji] of Object.entries(DESTINATION_EMOJI)) {
-        if (key !== 'default' && lower.includes(key)) return emoji
+    for (const [key, icon] of Object.entries(DESTINATION_ICONS)) {
+        if (key !== 'default' && lower.includes(key)) return icon
     }
-    return DESTINATION_EMOJI.default
+    return DESTINATION_ICONS.default
 }
 
 function formatDate(isoString) {
@@ -681,7 +677,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     const duration = trip.tripData?.duration || '?'
     const style = trip.tripData?.style || ''
     const budget = trip.tripData?.budget || ''
-    const emoji = getDestEmoji(dest)
+    const destIcon = getDestIcon(dest)
     const preview = trip.itineraryPreview || trip.itineraryText?.substring(0, 280) + '...' || ''
     const date = formatDate(trip.createdAt)
     const userName = trip.userName || 'Traveler'
@@ -703,26 +699,27 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
       <div class="trip-card-actions">
         <button class="btn-card-action btn-card-toggle"
           onclick="event.stopPropagation(); togglePublic('${trip.id}', ${!isPublic}, this)">
-          ${isPublic ? '🔒 Jadikan Privat' : '🌐 Jadikan Publik'}
+          <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
+          ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
         </button>
         <button class="btn-card-action btn-card-delete"
           onclick="event.stopPropagation(); deleteTrip('${trip.id}', this.closest('.trip-card'))">
-          🗑️ Hapus
+          <span class="material-symbols-outlined">delete</span> Hapus
         </button>
       </div>`
     }
 
     card.innerHTML = DOMPurify.sanitize(`
     <div class="trip-card-banner">
-      <div class="trip-card-banner-inner">${emoji}</div>
+      <div class="trip-card-banner-inner"><span class="material-symbols-outlined">${destIcon}</span></div>
       <div class="trip-card-dest">${dest}</div>
     </div>
     <div class="trip-card-body">
       <div class="trip-card-meta">
-        ${duration ? `<span class="trip-badge">📅 ${duration} hari</span>` : ''}
-        ${style ? `<span class="trip-badge">🧳 ${style.split(' ')[0]}</span>` : ''}
-        ${budget ? `<span class="trip-badge">💰 ${budget.split(' ')[0]}</span>` : ''}
-        ${isPublic ? `<span class="trip-badge" style="background:#d4f1f5;color:#0d5c67">🌐 Publik</span>` : ''}
+        ${duration ? `<span class="trip-badge"><span class="material-symbols-outlined">calendar_month</span> ${duration} hari</span>` : ''}
+        ${style ? `<span class="trip-badge"><span class="material-symbols-outlined">luggage</span> ${style.split(' ')[0]}</span>` : ''}
+        ${budget ? `<span class="trip-badge"><span class="material-symbols-outlined">payments</span> ${budget.split(' ')[0]}</span>` : ''}
+        ${isPublic ? `<span class="trip-badge trip-badge--public"><span class="material-symbols-outlined">public</span> Publik</span>` : ''}
       </div>
       <p class="trip-card-preview">${preview.replace(/[#*\`_\[\]]/g, '')}</p>
       <div class="trip-card-footer">
@@ -732,7 +729,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
         </div>
         <div class="trip-stats">
           <span class="trip-stat" onclick="event.stopPropagation(); likeTrip('${trip.id}', this)">
-            ❤️ ${likes}
+            <span class="material-symbols-outlined">favorite</span> ${likes}
           </span>
         </div>
       </div>
@@ -754,7 +751,7 @@ async function openTripModal(trip) {
     const duration = trip.tripData?.duration
     const tripStyle = trip.tripData?.style
     const budget = trip.tripData?.budget
-    const emoji = getDestEmoji(dest)
+    const destIcon = getDestIcon(dest)
     const date = formatDate(trip.createdAt)
     const userName = trip.userName || 'Traveler'
     const likes = trip.likes || 0
@@ -794,7 +791,7 @@ async function openTripModal(trip) {
     body.innerHTML = DOMPurify.sanitize(`
         <div class="modal-trip-header">
             <div class="modal-trip-banner">
-                <span class="modal-trip-emoji">${emoji}</span>
+                <span class="modal-trip-emoji"><span class="material-symbols-outlined">${destIcon}</span></span>
                 <div>
                     <h2 class="modal-trip-dest">${dest}</h2>
                 </div>
@@ -863,8 +860,13 @@ window.likeTrip = async function (id, btn) {
 
         const countStr = btn.textContent.replace(/[^0-9]/g, '')
         const newCount = parseInt(countStr || '0') + 1
-        btn.textContent = `❤️ ${newCount}`
-        btn.style.color = 'var(--coral-500)'
+        // Update the count inside the span (keep the icon)
+        const countSpan = btn.querySelector('span:last-child') || btn
+        if (countSpan !== btn) {
+            countSpan.textContent = ` ${newCount}`
+        } else {
+            btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:14px">favorite</span> ${newCount}`
+        }
     } catch {
         showToast('Gagal menyukai. Coba lagi.', 'error')
     }
@@ -889,7 +891,7 @@ window.deleteTrip = async function (id, cardEl) {
         cardEl.style.opacity = '0'
         cardEl.style.transform = 'scale(0.95)'
         setTimeout(() => cardEl.remove(), 300)
-        showToast('🗑️ Itinerary berhasil dihapus.', 'success')
+        showToast('Itinerary berhasil dihapus.', 'success')
     } catch (err) {
         showToast(err.message, 'error')
     }
@@ -915,7 +917,9 @@ window.togglePublic = async function (id, newState, btn) {
             throw new Error(d.error || 'Gagal memperbarui.')
         }
 
-        btn.textContent = newState ? '🔒 Jadikan Privat' : '🌐 Jadikan Publik'
+        btn.innerHTML = newState
+            ? '<span class="material-symbols-outlined" style="font-size:14px">lock</span> Jadikan Privat'
+            : '<span class="material-symbols-outlined" style="font-size:14px">public</span> Jadikan Publik'
         btn.setAttribute('onclick',
             `event.stopPropagation(); togglePublic('${id}', ${!newState}, this)`)
 
@@ -925,10 +929,9 @@ window.togglePublic = async function (id, newState, btn) {
             if (newState) {
                 if (!existing) {
                     const badge = document.createElement('span')
-                    badge.className = 'trip-badge'
+                    badge.className = 'trip-badge trip-badge--public'
                     badge.setAttribute('data-public-badge', '1')
-                    badge.style.cssText = 'background:#d4f1f5;color:#0d5c67'
-                    badge.textContent = '🌐 Publik'
+                    badge.innerHTML = '<span class="material-symbols-outlined">public</span> Publik'
                     metaEl.appendChild(badge)
                 }
             } else {
@@ -936,7 +939,7 @@ window.togglePublic = async function (id, newState, btn) {
             }
         }
 
-        showToast(newState ? '🌐 Itinerary kini publik!' : '🔒 Itinerary kini privat.', 'success')
+        showToast(newState ? 'Itinerary kini publik!' : 'Itinerary kini privat.', 'success')
     } catch (err) {
         showToast(err.message, 'error')
     } finally {
@@ -982,9 +985,7 @@ document.addEventListener('keydown', (e) => {
 // ══════════════════════════════════════════════════════════════
 window.addEventListener('scroll', () => {
     const navbar = document.getElementById('navbar')
-    navbar.style.boxShadow = window.scrollY > 20
-        ? '0 4px 30px rgba(5,46,51,0.4)'
-        : '0 2px 24px rgba(5,46,51,0.3)'
+    navbar.classList.toggle('scrolled', window.scrollY > 20)
 }, { passive: true })
 
 // ══════════════════════════════════════════════════════════════
@@ -1003,7 +1004,7 @@ const MAP_DAY_COLORS = [
     '#c77dff', // Hari 8 — Lavender
 ]
 
-const TIME_ICONS = { 'Pagi': '🌅', 'Siang': '☀️', 'Malam': '🌙' }
+const TIME_ICONS = { 'Pagi': 'wb_twilight', 'Siang': 'wb_sunny', 'Malam': 'dark_mode' }
 
 function getDayColor(dayIndex) {
     return MAP_DAY_COLORS[dayIndex % MAP_DAY_COLORS.length]
@@ -1100,7 +1101,7 @@ async function fetchAndRenderMap(itineraryText, duration) {
                 attempt++
                 const waitMs = 2000 * attempt // 2s, 4s
                 console.warn(`Map: retryable error, waiting ${waitMs}ms (attempt ${attempt})`)
-                updateMapLoadingText(`⏳ Server AI sibuk, mencoba lagi (${attempt}/${MAX_CLIENT_RETRIES})…`)
+                updateMapLoadingText(`Server AI sibuk, mencoba lagi (${attempt}/${MAX_CLIENT_RETRIES})…`)
                 await new Promise(r => setTimeout(r, waitMs))
                 continue
             }
@@ -1125,7 +1126,7 @@ async function fetchAndRenderMap(itineraryText, duration) {
             if (attempt < MAX_CLIENT_RETRIES) {
                 attempt++
                 const waitMs = 2000 * attempt
-                updateMapLoadingText(`⏳ Mencoba ulang (${attempt}/${MAX_CLIENT_RETRIES})…`)
+                updateMapLoadingText(`Mencoba ulang (${attempt}/${MAX_CLIENT_RETRIES})…`)
                 await new Promise(r => setTimeout(r, waitMs))
                 continue
             }
@@ -1240,12 +1241,12 @@ async function renderLeafletMap(days) {
 
             const markerLabel = `${dayIndex + 1}.${locIndex + 1}`
             const icon = buildMarkerIcon(color, markerLabel, L)
-            const timeIcon = TIME_ICONS[loc.time] || '📍'
+            const timeIcon = TIME_ICONS[loc.time] || 'location_on'
 
             const popupContent = DOMPurify.sanitize(`
                 <div class="map-popup">
                     <div class="map-popup-header" style="border-left: 3px solid ${color}">
-                        <span class="map-popup-day">Hari ${day.day} · ${timeIcon} ${loc.time || ''}</span>
+                        <span class="map-popup-day">Hari ${day.day} · <span class="material-symbols-outlined" style="font-size:12px">${timeIcon}</span> ${loc.time || ''}</span>
                         <strong class="map-popup-name">${loc.name}</strong>
                     </div>
                     ${loc.description ? `<p class="map-popup-desc">${loc.description}</p>` : ''}
@@ -1293,7 +1294,7 @@ async function renderLeafletMap(days) {
             fillColor: getDayColor(0),
             fillOpacity: 1,
             weight: 3,
-        }).addTo(leafletMap).bindTooltip('🚀 Mulai', { permanent: true, direction: 'top', className: 'map-start-tooltip' })
+        }).addTo(leafletMap).bindTooltip('Mulai', { permanent: true, direction: 'top', className: 'map-start-tooltip' })
     }
 }
 
