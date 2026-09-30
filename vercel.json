@@ -3,7 +3,12 @@
   "services": {
     "backend": {
       "root": "backend",
-      "framework": "express"
+      "framework": "express",
+      "functions": {
+        "**/*.js": {
+          "maxDuration": 60
+        }
+      }
     },
     "frontend": {
       "root": "frontend",
@@ -23,10 +28,5 @@
         "service": "frontend"
       }
     }
-  ],
-  "functions": {
-    "backend/**/*.js": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }
