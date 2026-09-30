@@ -401,6 +401,7 @@ select:focus:not(:focus-visible) {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--ink);
 }
 
 .hero-img {
@@ -2870,7 +2871,7 @@ select:focus:not(:focus-visible) {
     aspect-ratio: 4 / 3;
     width: 100%;
     overflow: hidden;
-    background: var(--border-soft);
+    background: var(--ink);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 .trip-card-cover img {

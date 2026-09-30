@@ -11,15 +11,11 @@ import { createIcons, icons } from 'lucide'
 let myTripsCache = [];
 let communityTripsCache = [];
 
-// Helper untuk menampilkan gambar destinasi
+// Helper untuk menampilkan gambar destinasi dinamis menggunakan Pollinations AI
 window.getDestImage = function(dest) {
-    if (!dest) return 'https://images.unsplash.com/photo-1555899434-94d1368aa7af?auto=format&fit=crop&q=80&w=800'; // Default placeholder
-    dest = dest.toLowerCase();
-    if (dest.includes('bali')) return 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800';
-    if (dest.includes('lombok') || dest.includes('komodo')) return 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&q=80&w=800';
-    if (dest.includes('jogja') || dest.includes('yogyakarta')) return 'https://images.unsplash.com/photo-1584814526543-157ad30cb855?auto=format&fit=crop&q=80&w=800';
-    if (dest.includes('jakarta')) return 'https://images.unsplash.com/photo-1555899434-94d1368aa7af?auto=format&fit=crop&q=80&w=800';
-    return 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&q=80&w=800'; // Generic beautiful landscape
+    if (!dest) return 'https://image.pollinations.ai/prompt/beautiful%20scenery%20tourism%20destination%20in%20indonesia?width=800&height=400&nologo=true';
+    const cleanDest = dest.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+    return `https://image.pollinations.ai/prompt/beautiful%20scenery%20tourism%20destination%20landmark%20in%20${encodeURIComponent(cleanDest)}%20indonesia?width=800&height=400&nologo=true`;
 }
 
 // Configure DOMPurify for external links
