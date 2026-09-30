@@ -227,6 +227,7 @@ FORMAT JSON YANG WAJIB DIIKUTI:
 ATURAN:
 - "itinerary_markdown": Berisi itinerary lengkap dalam format Markdown, mirip contoh tapi tanpa tabel budget.
 - "budget": Array objek biaya dengan "name" dan "amount" dalam angka bulat (tanpa Rp/titik).
+- PENTING: TOTAL BIAYA (penjumlahan seluruh "amount") HARUS SESUAI dan TIDAK BOLEH jauh melebihi "Estimasi Anggaran" harian yang diminta dikali "Durasi Perjalanan". Sesuaikan rencana perjalanan agar realistis dengan budget pengguna.
 `;
 
 const buildItineraryPrompt = ({ origin, destination, duration, budget, style }) => `
@@ -234,7 +235,7 @@ Buatkan itinerary perjalanan yang detail, menarik, dan realistis berdasarkan inf
 - **Asal Keberangkatan:** ${origin || "Tidak ditentukan"}
 - **Destinasi Utama:** ${destination}
 - **Durasi Perjalanan:** ${duration} hari
-- **Estimasi Anggaran:** ${budget}
+- **Estimasi Anggaran:** ${budget} (BIAYA TOTAL HARUS DISESUAIKAN DENGAN BATAS ANGGARAN INI)
 - **Gaya Wisata:** ${style}
 `;
 
