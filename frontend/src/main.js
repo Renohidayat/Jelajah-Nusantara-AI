@@ -840,7 +840,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
       </div>`
     }
 
-    card.innerHTML = DOMPurify.sanitize(`
+    card.innerHTML = `
     <div class="trip-card-cover">
       <img src="${destImage}" data-wiki-dest="${dest}" alt="${dest}" loading="lazy" />
       <div class="trip-card-cover-overlay"></div>
@@ -866,7 +866,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
         </div>
       </div>
       ${actionsHTML}
-    </div>`)
+    </div>`
 
     card.addEventListener('click', () => openTripModal(trip))
     return card
@@ -880,6 +880,7 @@ async function openTripModal(trip) {
     const body = document.getElementById('modal-body')
 
     const dest = trip.tripData?.destination || 'Destinasi'
+    const destIcon = getDestIcon(dest)
     const duration = trip.tripData?.duration
     const tripStyle = trip.tripData?.style
     const budget = trip.tripData?.budget
@@ -920,7 +921,7 @@ async function openTripModal(trip) {
             </button>
         </div>` : ''
 
-    body.innerHTML = DOMPurify.sanitize(`
+    body.innerHTML = `
         <div class="modal-trip-header">
             <div class="modal-trip-banner">
                 <span class="modal-trip-emoji"><span class="material-symbols-outlined">${destIcon}</span></span>
@@ -950,7 +951,7 @@ async function openTripModal(trip) {
                 <div class="spinner" style="border-color:rgba(0,0,0,0.08);border-top-color:var(--rausch);width:24px;height:24px"></div>
                 <span>Memuat itinerary...</span>
             </div>
-        </div>`)
+        </div>`
 
     overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
