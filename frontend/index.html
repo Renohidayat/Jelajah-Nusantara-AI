@@ -33,6 +33,9 @@
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Fonts: Plus Jakarta Sans & Material Symbols -->
+        <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -42,7 +45,7 @@
     <!-- Leaflet.js -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
     
     <!-- JSON-LD -->
     <script type="application/ld+json">
@@ -75,7 +78,7 @@
 
             <!-- Hero -->
             <div class="hero">
-                <img class="hero-img" src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=80"
+                <img class="hero-img" fetchpriority="high" src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=80"
                     alt="Pemandangan alam Indonesia" width="1600" height="900" />
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
@@ -599,7 +602,7 @@
     <!--#include virtual="/src/partials/footer.html" -->
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script type="module" src="/src/main.js"></script>
 </body>
 
