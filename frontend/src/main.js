@@ -652,8 +652,17 @@ async function loadMyTrips() {
         loading.classList.add('hidden')
 
         if (!data.trips || data.trips.length === 0) {
-            empty.classList.remove('hidden')
-            return
+            empty.classList.remove('hidden');
+            let ctl = document.getElementById(empty.id.replace('empty', 'controls'));
+            if(ctl) ctl.style.display = 'none';
+            return;
+        }
+        if(empty.id.includes('mytrips')) {
+            myTripsCache = data.trips;
+            document.getElementById('mytrips-controls').style.display = 'flex';
+        } else {
+            communityTripsCache = data.trips;
+            document.getElementById('community-controls').style.display = 'flex';
         }
 
         data.trips.forEach((trip, i) => {
@@ -686,8 +695,17 @@ async function loadCommunity() {
         loading.classList.add('hidden')
 
         if (!data.trips || data.trips.length === 0) {
-            empty.classList.remove('hidden')
-            return
+            empty.classList.remove('hidden');
+            let ctl = document.getElementById(empty.id.replace('empty', 'controls'));
+            if(ctl) ctl.style.display = 'none';
+            return;
+        }
+        if(empty.id.includes('mytrips')) {
+            myTripsCache = data.trips;
+            document.getElementById('mytrips-controls').style.display = 'flex';
+        } else {
+            communityTripsCache = data.trips;
+            document.getElementById('community-controls').style.display = 'flex';
         }
 
         data.trips.forEach((trip, i) => {
@@ -736,7 +754,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     const duration = trip.tripData?.duration || '?'
     const style = trip.tripData?.style || ''
     const budget = trip.tripData?.budget || ''
-    const destIcon = getDestIcon(dest)
+    const destImage = getDestImage(dest)
     const preview = trip.itineraryPreview || trip.itineraryText?.substring(0, 280) + '...' || ''
     const date = formatDate(trip.createdAt)
     const userName = trip.userName || 'Traveler'
@@ -769,8 +787,9 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     }
 
     card.innerHTML = DOMPurify.sanitize(`
-    <div class="trip-card-banner">
-      <div class="trip-card-banner-inner"><span class="material-symbols-outlined">${destIcon}</span></div>
+    <div class="trip-card-cover">
+      <img src="${destImage}" alt="${dest}" loading="lazy" />
+      <div class="trip-card-cover-overlay"></div>
       <div class="trip-card-dest">${dest}</div>
     </div>
     <div class="trip-card-body">
@@ -810,7 +829,7 @@ async function openTripModal(trip) {
     const duration = trip.tripData?.duration
     const tripStyle = trip.tripData?.style
     const budget = trip.tripData?.budget
-    const destIcon = getDestIcon(dest)
+    const destImage = getDestImage(dest)
     const date = formatDate(trip.createdAt)
     const userName = trip.userName || 'Traveler'
     const likes = trip.likes || 0
@@ -1516,3 +1535,46 @@ function renderBudgetChart(data) {
         }]
     })
 }
+
+
+
+
+window.filterMyTrips = function() {
+    const term = document.getElementById('mytrips-search').value.toLowerCase();
+    const sort = document.getElementById('mytrips-sort').value;
+    let filtered = myTripsCache.filter(t => {
+        const dest = (t.tripData?.destination || '').toLowerCase();
+        const prev = (t.itineraryPreview || t.itineraryText || '').toLowerCase();
+        return dest.includes(term) || prev.includes(term);
+    });
+    if (sort === 'oldest') {
+        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    const grid = document.getElementById('mytrips-grid');
+    grid.innerHTML = '';
+    filtered.forEach((trip, i) => {
+        grid.appendChild(createTripCard(trip, { showActions: true, delay: i * 0.05 }));
+    });
+};
+
+window.filterCommunity = function() {
+    const term = document.getElementById('community-search').value.toLowerCase();
+    const sort = document.getElementById('community-sort').value;
+    let filtered = communityTripsCache.filter(t => {
+        const dest = (t.tripData?.destination || '').toLowerCase();
+        const prev = (t.itineraryPreview || t.itineraryText || '').toLowerCase();
+        return dest.includes(term) || prev.includes(term);
+    });
+    if (sort === 'popular') {
+        filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    } else {
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    const grid = document.getElementById('community-grid');
+    grid.innerHTML = '';
+    filtered.forEach((trip, i) => {
+        grid.appendChild(createTripCard(trip, { showActions: false, delay: i * 0.05 }));
+    });
+};
