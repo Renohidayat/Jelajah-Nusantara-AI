@@ -76,7 +76,7 @@
             <!-- Hero -->
             <div class="hero">
                 <img class="hero-img" src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=80"
-                    alt="Indonesia" />
+                    alt="Pemandangan alam Indonesia" width="1600" height="900" />
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
                     <h1 class="hero-title">Rencanakan perjalanan<br />impianmu di Indonesia.</h1>
@@ -91,10 +91,10 @@
                 <div class="mode-toggle-wrapper">
                     <div class="mode-toggle" id="mode-toggle">
                         <button class="mode-btn active" id="mode-text" onclick="switchMode('text')">
-                            <span class="material-symbols-outlined">edit_note</span> Input Manual
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>edit_note</span> Input Manual
                         </button>
                         <button class="mode-btn" id="mode-vision" onclick="switchMode('vision')">
-                            <span class="material-symbols-outlined">photo_camera</span> Upload Foto
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>photo_camera</span> Upload Foto
                         </button>
                     </div>
                 </div>
@@ -225,14 +225,14 @@
         </div>
         <div class="form-group form-group--full">
             <div class="style-chips" id="style-chips">
-                <label class="chip"><input type="radio" name="style" value="Petualangan & Alam" /><span><span class="material-symbols-outlined">hiking</span> Petualangan &amp; Alam</span></label>
-                <label class="chip"><input type="radio" name="style" value="Budaya & Sejarah" /><span><span class="material-symbols-outlined">temple_hindu</span> Budaya &amp; Sejarah</span></label>
-                <label class="chip"><input type="radio" name="style" value="Kuliner & Wisata Kota" /><span><span class="material-symbols-outlined">restaurant</span> Kuliner &amp; Kota</span></label>
-                <label class="chip"><input type="radio" name="style" value="Pantai & Bahari" /><span><span class="material-symbols-outlined">sailing</span> Pantai &amp; Bahari</span></label>
-                <label class="chip"><input type="radio" name="style" value="Relaksasi & Wellness" /><span><span class="material-symbols-outlined">spa</span> Relaksasi</span></label>
-                <label class="chip"><input type="radio" name="style" value="Keluarga & Anak-anak" /><span><span class="material-symbols-outlined">family_restroom</span> Keluarga</span></label>
-                <label class="chip"><input type="radio" name="style" value="Bulan Madu & Romantis" /><span><span class="material-symbols-outlined">favorite</span> Bulan Madu</span></label>
-                <label class="chip"><input type="radio" name="style" value="Backpacker & Hemat" /><span><span class="material-symbols-outlined">backpack</span> Backpacker</span></label>
+                <label class="chip"><input type="radio" name="style" value="Petualangan & Alam" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>hiking</span> Petualangan &amp; Alam</span></label>
+                <label class="chip"><input type="radio" name="style" value="Budaya & Sejarah" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>temple_hindu</span> Budaya &amp; Sejarah</span></label>
+                <label class="chip"><input type="radio" name="style" value="Kuliner & Wisata Kota" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>restaurant</span> Kuliner &amp; Kota</span></label>
+                <label class="chip"><input type="radio" name="style" value="Pantai & Bahari" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>sailing</span> Pantai &amp; Bahari</span></label>
+                <label class="chip"><input type="radio" name="style" value="Relaksasi & Wellness" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>spa</span> Relaksasi</span></label>
+                <label class="chip"><input type="radio" name="style" value="Keluarga & Anak-anak" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>family_restroom</span> Keluarga</span></label>
+                <label class="chip"><input type="radio" name="style" value="Bulan Madu & Romantis" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>favorite</span> Bulan Madu</span></label>
+                <label class="chip"><input type="radio" name="style" value="Backpacker & Hemat" /><span><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>backpack</span> Backpacker</span></label>
             </div>
         </div>
     </div>
@@ -240,7 +240,7 @@
     <div class="form-actions">
         <button class="btn btn-primary w-full" id="btn-generate-text" onclick="generateItinerary()">
             <span class="btn-text">
-                <span class="material-symbols-outlined">bolt</span>
+                <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>bolt</span>
                 Buat Itinerary
             </span>
             <span class="btn-loading hidden">
@@ -267,7 +267,7 @@
                             <p class="upload-hint">Mendukung JPEG, PNG, WEBP · Maks 10 MB</p>
                         </div>
                         <div class="upload-preview hidden" id="upload-preview">
-                            <img id="preview-img" src="" alt="Preview" />
+                            <img id="preview-img" src="" alt="Preview tempat wisata" width="400" height="300" />
                             <div class="preview-overlay"><span>Ganti Foto</span></div>
                         </div>
                         <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(event)" />
@@ -282,7 +282,7 @@
                     <div class="form-actions">
                         <button class="btn btn-primary w-full" id="btn-generate-vision" onclick="generateVision()">
                             <span class="btn-text">
-                                <span class="material-symbols-outlined">visibility</span>
+                                <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>visibility</span>
                                 Analisis &amp; Buat Itinerary
                             </span>
                             <span class="btn-loading hidden">
@@ -294,9 +294,9 @@
 
                 <!-- ERROR BANNER -->
                 <div class="error-banner hidden" id="error-banner">
-                    <span class="material-symbols-outlined">warning</span>
+                    <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>warning</span>
                     <span id="error-text"></span>
-                    <button onclick="dismissError()"><span class="material-symbols-outlined">close</span></button>
+                    <button onclick="dismissError()"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span></button>
                 </div>
 
                 <!-- RESULT SECTION -->
@@ -306,10 +306,10 @@
                         <div class="result-meta" id="result-meta"></div>
                         <div class="result-actions">
                             <button class="btn btn-secondary" onclick="shareItinerary()">
-                                <span class="material-symbols-outlined">share</span> Bagikan
+                                <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>share</span> Bagikan
                             </button>
                             <button class="btn btn-primary" id="btn-save" onclick="saveItinerary()">
-                                <span class="material-symbols-outlined">bookmark</span> Simpan
+                                <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>bookmark</span> Simpan
                             </button>
                             <label class="public-toggle">
                                 <input type="checkbox" id="toggle-public" />
@@ -324,7 +324,7 @@
                         <div class="weather-widget-inner">
                             <div class="weather-info-box">
                                 <div class="weather-temp-row">
-                                    <span class="weather-icon" id="weather-icon"><span class="material-symbols-outlined">wb_sunny</span></span>
+                                    <span class="weather-icon" id="weather-icon"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>wb_sunny</span></span>
                                     <span class="weather-temp" id="weather-temp">--°C</span>
                                 </div>
                                 <div class="weather-meta-row">
@@ -334,7 +334,7 @@
                             </div>
                             <div class="weather-divider"></div>
                             <div class="weather-ai-rec-box">
-                                <span class="weather-ai-badge"><span class="material-symbols-outlined">auto_awesome</span> Saran Pakaian & Cuaca</span>
+                                <span class="weather-ai-badge"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>auto_awesome</span> Saran Pakaian & Cuaca</span>
                                 <p class="weather-ai-text" id="weather-ai-text">Memproses rekomendasi perjalanan
                                     berdasarkan cuaca saat ini...</p>
                             </div>
@@ -345,14 +345,14 @@
                     <div class="result-view-tabs" id="result-view-tabs">
                         <button class="result-view-tab active" id="vtab-itinerary"
                             onclick="switchResultView('itinerary')">
-                            <span class="material-symbols-outlined">description</span> Itinerary
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>description</span> Itinerary
                         </button>
                         <button class="result-view-tab" id="vtab-budget" onclick="switchResultView('budget')">
-                            <span class="material-symbols-outlined">payments</span> Anggaran
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>payments</span> Anggaran
                             <span class="tab-badge-new">BARU</span>
                         </button>
                         <button class="result-view-tab" id="vtab-map" onclick="switchResultView('map')">
-                            <span class="material-symbols-outlined">map</span> Peta Rute
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>map</span> Peta Rute
                         </button>
                     </div>
 
@@ -366,7 +366,7 @@
                         <div class="budget-container">
                             <div class="budget-chart-wrapper">
                                 <div class="budget-chart-card">
-                                    <h3 class="budget-chart-title"><span class="material-symbols-outlined">bar_chart</span> Breakdown Anggaran</h3>
+                                    <h3 class="budget-chart-title"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>bar_chart</span> Breakdown Anggaran</h3>
                                     <div class="budget-chart-canvas-wrap">
                                         <canvas id="budget-chart"></canvas>
                                     </div>
@@ -374,7 +374,7 @@
                             </div>
                             <div class="budget-summary-wrapper">
                                 <div class="budget-summary-card">
-                                    <h3 class="budget-summary-title"><span class="material-symbols-outlined">account_balance_wallet</span> Ringkasan Biaya</h3>
+                                    <h3 class="budget-summary-title"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>account_balance_wallet</span> Ringkasan Biaya</h3>
                                     <div class="budget-total-display" id="budget-total-display"></div>
                                     <table class="budget-table" id="budget-table">
                                         <thead>
@@ -390,7 +390,7 @@
                             </div>
                         </div>
                         <div class="budget-no-data hidden" id="budget-no-data">
-                            <div class="budget-no-data-icon"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+                            <div class="budget-no-data-icon"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>account_balance_wallet</span></div>
                             <p>Data anggaran tidak tersedia untuk itinerary ini.</p>
                         </div>
                     </div>
@@ -402,20 +402,20 @@
                             <p class="map-loading-text">Sedang menyiapkan peta perjalananmu...</p>
                         </div>
                         <div class="map-error-state hidden" id="map-error-state">
-                            <span class="map-error-icon"><span class="material-symbols-outlined">map</span></span>
+                            <span class="map-error-icon"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>map</span></span>
                             <p id="map-error-msg">Gagal memuat peta.</p>
-                            <button class="btn btn-outline" onclick="retryMapExtraction()" style="margin-top:1rem"><span class="material-symbols-outlined">refresh</span> Coba Lagi</button>
+                            <button class="btn btn-outline" onclick="retryMapExtraction()" style="margin-top:1rem"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>refresh</span> Coba Lagi</button>
                         </div>
                         <div id="route-map" class="route-map-container hidden"></div>
                         <div class="map-legend hidden" id="map-legend">
-                            <h3 class="map-legend-title"><span class="material-symbols-outlined">route</span> Rute Perjalanan</h3>
+                            <h3 class="map-legend-title"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>route</span> Rute Perjalanan</h3>
                             <div class="map-legend-days" id="map-legend-days"></div>
                         </div>
                     </div>
 
                     <div class="regenerate-row">
                         <button class="btn btn-outline" onclick="regenerate()">
-                            <span class="material-symbols-outlined">refresh</span> Buat Ulang Itinerary
+                            <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>refresh</span> Buat Ulang Itinerary
                         </button>
                     </div>
                 </div><!-- /result-section -->
@@ -516,7 +516,7 @@
                 
                 <div class="trips-controls" id="mytrips-controls" style="display:none;">
                     <div class="search-box">
-                        <span class="material-symbols-outlined">search</span>
+                        <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>search</span>
                         <input type="text" id="mytrips-search" class="input" placeholder="Cari destinasi atau catatan..." oninput="filterMyTrips()" />
                     </div>
                     <div class="sort-box">
@@ -560,7 +560,7 @@
                 
                 <div class="trips-controls" id="community-controls" style="display:none;">
                     <div class="search-box">
-                        <span class="material-symbols-outlined">search</span>
+                        <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>search</span>
                         <input type="text" id="community-search" class="input" placeholder="Cari destinasi atau cerita..." oninput="filterCommunity()" />
                     </div>
                     <div class="sort-box">
@@ -587,7 +587,7 @@
     <div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal()">
         <div class="modal-box" onclick="event.stopPropagation()">
             <button class="modal-close" onclick="closeModal()">
-                <span class="material-symbols-outlined">close</span>
+                <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span>
             </button>
             <div class="modal-body" id="modal-body"></div>
         </div>
