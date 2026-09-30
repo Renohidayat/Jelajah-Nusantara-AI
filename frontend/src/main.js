@@ -898,7 +898,23 @@ async function openTripModal(trip) {
             </div>
         </div>`)
 
-    overlay.classList.remove('hidden')
+    overlay.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+    
+    // Focus trap
+    const modalBox = overlay.querySelector('.modal-box');
+    if(modalBox) {
+        modalBox.setAttribute('tabindex', '-1');
+        modalBox.focus();
+    }
+    
+    // Global Esc listener
+    window._modalEscListener = function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    };
+    document.addEventListener('keydown', window._modalEscListener);
 
     let itineraryText = trip.itineraryText
     if (!itineraryText || itineraryText.endsWith('...')) {
@@ -918,8 +934,16 @@ async function openTripModal(trip) {
 }
 
 window.closeModal = function () {
-    document.getElementById('modal-overlay').classList.add('hidden')
-    document.getElementById('modal-body').innerHTML = ''
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.classList.add('hidden');
+    const body = document.getElementById('modal-body');
+    if (body) body.innerHTML = '';
+    
+    document.body.classList.remove('modal-open');
+    if (window._modalEscListener) {
+        document.removeEventListener('keydown', window._modalEscListener);
+        window._modalEscListener = null;
+    }
 }
 
 // ══════════════════════════════════════════════════════════════
