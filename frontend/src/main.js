@@ -861,7 +861,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
         </div>
         <div class="trip-stats">
           <span class="trip-stat" onclick="event.stopPropagation(); likeTrip('${trip.id}', this)">
-            <span class="material-symbols-outlined">favorite</span> ${likes}
+            <span class="material-symbols-outlined">favorite</span> <span>${likes}</span>
           </span>
         </div>
       </div>
