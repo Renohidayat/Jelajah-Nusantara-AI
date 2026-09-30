@@ -1,3 +1,4 @@
+@import url('./ui.css');
 /* ═══════════════════════════════════════════════════════════════
    JELAJAH NUSANTARA — Design System v2
    Clean, professional, zero-emoji, token-driven
@@ -244,43 +245,17 @@ select:focus:not(:focus-visible) {
 }
 
 /* Login button — primary styled */
-.btn-login {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-sm);
-    padding: 8px var(--sp-base);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--canvas);
-    background: var(--primary);
-    border: none;
-    border-radius: var(--r-md);
-    cursor: pointer;
-    transition: background var(--t-fast);
-    white-space: nowrap;
-}
 
-.btn-login:hover {
-    background: var(--primary-hover);
-}
 
-.btn-login:active {
-    transform: scale(0.98);
-}
 
-.btn-login:disabled {
-    background: var(--primary-disabled);
-    cursor: not-allowed;
-}
 
-.btn-login.large {
-    padding: 12px var(--sp-lg);
-    font-size: 15px;
-}
 
-.btn-login svg path {
-    fill: var(--canvas);
-}
+
+
+
+
+
+
 
 /* User info */
 .user-info {
@@ -307,23 +282,9 @@ select:focus:not(:focus-visible) {
     white-space: nowrap;
 }
 
-.btn-logout {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 4px 12px;
-    border-radius: var(--r-md);
-    background: var(--canvas);
-    cursor: pointer;
-    transition: color var(--t-fast), border-color var(--t-fast);
-}
 
-.btn-logout:hover {
-    color: var(--error);
-    border-color: var(--error-border);
-}
+
+
 
 /* Hamburger */
 .hamburger {
@@ -424,28 +385,11 @@ select:focus:not(:focus-visible) {
     color: var(--ink);
 }
 
-.btn-logout-mobile {
-    padding: 6px 0;
-    color: var(--error);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    text-align: left;
-    background: none;
-    border: none;
-    cursor: pointer;
-    min-height: 44px;
-}
 
-.btn-logout-mobile:hover {
-    color: var(--primary-hover);
-}
 
-.btn-logout-mobile .material-symbols-outlined {
-    font-size: 18px !important;
-}
+
+
+
 
 /* ── 4. HERO ────────────────────────────────────────────────── */
 .hero {
@@ -581,72 +525,7 @@ select:focus:not(:focus-visible) {
     gap: var(--sp-lg);
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
 
-.form-group--full {
-    grid-column: 1 / -1;
-}
-
-.form-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink);
-    letter-spacing: 0;
-}
-
-.required {
-    color: var(--primary);
-}
-
-.form-input {
-    height: 48px;
-    padding: 0 var(--sp-base);
-    background: var(--canvas);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    font-size: 15px;
-    font-weight: 400;
-    color: var(--ink);
-    transition: border-color var(--t-fast);
-    outline: none;
-    width: 100%;
-}
-
-.form-input::placeholder {
-    color: var(--muted-soft);
-}
-
-.form-input:hover {
-    border-color: var(--border-strong);
-}
-
-.form-input:focus {
-    border-color: var(--ink);
-    box-shadow: 0 0 0 1px var(--ink);
-}
-
-.form-input.error {
-    border-color: var(--error);
-}
-
-.form-input:disabled {
-    background: var(--surface);
-    color: var(--muted-soft);
-    cursor: not-allowed;
-}
-
-.form-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236A6A6A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 40px;
-    cursor: pointer;
-}
 
 /* Style Chips */
 .style-chips {
@@ -694,40 +573,15 @@ select:focus:not(:focus-visible) {
     margin-top: var(--sp-lg);
 }
 
-.btn-generate {
-    width: 100%;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--sp-sm);
-    background: var(--primary);
-    color: var(--on-primary);
-    border-radius: var(--r-md);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: background var(--t-fast), transform var(--t-fast);
-}
 
-.btn-generate:hover {
-    background: var(--primary-hover);
-}
 
-.btn-generate:active {
-    transform: scale(0.99);
-}
 
-.btn-generate:disabled {
-    background: var(--primary-disabled);
-    cursor: not-allowed;
-    transform: none;
-}
 
-.btn-generate .material-symbols-outlined {
-    font-size: 20px !important;
-}
+
+
+
+
+
 
 .btn-text,
 .btn-loading {
@@ -875,47 +729,17 @@ select:focus:not(:focus-visible) {
     gap: var(--sp-sm);
 }
 
-.btn-action {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px var(--sp-base);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    background: var(--canvas);
-    cursor: pointer;
-    transition: border-color var(--t-fast), background var(--t-fast);
-    min-height: 36px;
-}
 
-.btn-action:hover {
-    border-color: var(--border-strong);
-    background: var(--surface);
-}
 
-.btn-action .material-symbols-outlined {
-    font-size: 16px !important;
-}
 
-.btn-save {
-    background: var(--primary);
-    color: var(--on-primary);
-    border-color: var(--primary);
-}
 
-.btn-save:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-}
 
-.btn-save:disabled {
-    background: var(--primary-disabled);
-    border-color: var(--primary-disabled);
-    cursor: not-allowed;
-}
+
+
+
+
+
+
 
 /* Public toggle */
 .public-toggle {
@@ -1412,29 +1236,11 @@ select:focus:not(:focus-visible) {
     margin-top: var(--sp-xl);
 }
 
-.btn-regen {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-sm);
-    padding: 10px var(--sp-lg);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    background: var(--canvas);
-    cursor: pointer;
-    transition: border-color var(--t-fast), background var(--t-fast);
-}
 
-.btn-regen:hover {
-    border-color: var(--border-strong);
-    background: var(--surface);
-}
 
-.btn-regen .material-symbols-outlined {
-    font-size: 18px !important;
-}
+
+
+
 
 /* ── 10. MY TRIPS / COMMUNITY PAGES ────────────────────────── */
 .container {
@@ -1717,46 +1523,15 @@ select:focus:not(:focus-visible) {
     border-top: 1px solid var(--border-soft);
 }
 
-.btn-card-action {
-    flex: 1;
-    padding: 6px var(--sp-sm);
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: var(--r-md);
-    border: 1px solid var(--border);
-    background: var(--canvas);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all var(--t-fast);
-    text-align: center;
-    white-space: nowrap;
-    min-height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
 
-.btn-card-action .material-symbols-outlined {
-    font-size: 14px !important;
-}
 
-.btn-card-action:hover {
-    border-color: var(--border-strong);
-    color: var(--ink);
-    background: var(--surface);
-}
 
-.btn-card-delete {
-    color: var(--error);
-    border-color: var(--error-border);
-    background: var(--error-light);
-}
 
-.btn-card-delete:hover {
-    background: var(--error-border);
-    border-color: var(--error);
-}
+
+
+
+
+
 
 /* Loading: skeleton */
 .loading-state {}
@@ -1823,29 +1598,11 @@ select:focus:not(:focus-visible) {
     margin-bottom: var(--sp-xl);
 }
 
-.btn-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-sm);
-    padding: 12px var(--sp-lg);
-    background: var(--primary);
-    color: var(--on-primary);
-    border-radius: var(--r-md);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: background var(--t-fast);
-}
 
-.btn-cta:hover {
-    background: var(--primary-hover);
-}
 
-.btn-cta:disabled {
-    background: var(--primary-disabled);
-    cursor: not-allowed;
-}
+
+
+
 
 /* ── 11. MODAL ──────────────────────────────────────────────── */
 .modal-overlay {
@@ -2770,3 +2527,6 @@ select:focus:not(:focus-visible) {
     color: var(--muted-soft);
     font-style: italic;
 }
+
+
+
