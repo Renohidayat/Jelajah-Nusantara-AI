@@ -5,23 +5,23 @@
 
 /* ── 1. DESIGN TOKENS ──────────────────────────────────────── */
 :root {
-    /* Brand */
-    --primary: #FF385C;
-    --primary-hover: #E00B41;
-    --primary-light: #FFF1F3;
-    --primary-disabled: #FFD1DA;
+    /* Brand: Terracotta (Nusantara Theme) */
+    --primary: #d95e39;
+    --primary-hover: #be4d2b;
+    --primary-light: #fef1ed;
+    --primary-disabled: #f7bfae;
 
-    /* Neutral Scale */
-    --ink: #222222;
-    --body: #3F3F3F;
-    --muted: #6A6A6A;
-    --muted-soft: #929292;
-    --border: #DDDDDD;
-    --border-soft: #EBEBEB;
-    --border-strong: #C1C1C1;
-    --surface: #F7F7F7;
-    --canvas: #FFFFFF;
-    --on-primary: #FFFFFF;
+    /* Neutral Scale (Warm) */
+    --ink: #1c1917; /* Almost black */
+    --body: #44403c;
+    --muted: #78716c;
+    --muted-soft: #a8a29e;
+    --border: #d6d3d1;
+    --border-soft: #e7e5e4;
+    --border-strong: #a8a29e;
+    --surface: #f5f5f4;
+    --canvas: #fafaf9; /* Warm off-white */
+    --on-primary: #ffffff;
 
     /* Semantic */
     --success: #16a34a;
@@ -51,16 +51,14 @@
     --sp-xxl: 48px;
     --sp-section: 64px;
 
-    /* Radius — only 2 tiers + pill */
-    --r-sm: 4px;
-    --r-md: 8px;
+    /* Radius — only 2 tiers (6px and 12px) + pill */
+    --r-sm: 6px;
     --r-lg: 12px;
     --r-full: 9999px;
 
-    /* Shadows — 2 tiers */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.14);
+    /* Shadows — Only for floating elements (sheet, dropdown, toast) */
+    --shadow-float: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.14);
 
     /* Layout */
     --max-width: 1280px;
