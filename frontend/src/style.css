@@ -395,7 +395,7 @@ select:focus:not(:focus-visible) {
 .hero {
     position: relative;
     width: 100%;
-    height: 440px;
+    height: 320px;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -545,6 +545,7 @@ select:focus:not(:focus-visible) {
 .chip span {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
@@ -563,9 +564,9 @@ select:focus:not(:focus-visible) {
 }
 
 .chip input:checked+span {
-    background: var(--ink);
-    color: var(--on-primary);
-    border-color: var(--ink);
+    background: rgba(217, 94, 57, 0.1);
+    color: var(--primary);
+    border-color: var(--primary);
 }
 
 /* Generate Button */
@@ -2248,7 +2249,7 @@ select:focus:not(:focus-visible) {
     }
 
     .hero {
-        height: 320px;
+        height: 240px;
     }
 
     .hero-subtitle {
@@ -2325,7 +2326,7 @@ select:focus:not(:focus-visible) {
     }
 
     .hero {
-        height: 260px;
+        height: 180px;
     }
 
     .hero-title {
@@ -2530,3 +2531,186 @@ select:focus:not(:focus-visible) {
 
 
 
+
+/* -- FORM SECTION (PLANNER) -- */
+.form-section {
+    padding: 1.5rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    margin-bottom: 1.5rem;
+}
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+.form-section-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+}
+.step-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(217, 94, 57, 0.1);
+    color: var(--primary);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* Input with icon */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-with-icon .icon-left {
+    position: absolute;
+    left: 12px;
+    color: var(--muted);
+    font-size: 20px;
+}
+.input-with-icon .input {
+    padding-left: 40px;
+}
+
+/* Segmented Grid (Radio Cards) */
+.segmented-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+}
+.segment-card {
+    cursor: pointer;
+}
+.segment-card input {
+    display: none;
+}
+.segment-card span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+    transition: all var(--t-fast) var(--ease);
+    text-align: center;
+}
+.segment-card:hover span {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+}
+.segment-card input:checked + span {
+    background: rgba(217, 94, 57, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* Budget Grid */
+.budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+.budget-card {
+    cursor: pointer;
+}
+.budget-card input {
+    display: none;
+}
+.budget-card .budget-content {
+    padding: 16px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: all var(--t-fast) var(--ease);
+}
+.budget-card:hover .budget-content {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+}
+.budget-card input:checked + .budget-content {
+    background: rgba(217, 94, 57, 0.05);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+.budget-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+.budget-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+.budget-card input:checked + .budget-content .budget-title {
+    color: var(--primary);
+}
+
+/* -- UPLOAD AREA OVERRIDE -- */
+.upload-area {
+    border: 2px dashed var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--t-fast) var(--ease);
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.upload-area:hover,
+.upload-area.drag-over {
+    border-color: var(--primary);
+    background: rgba(217, 94, 57, 0.05);
+}
+.upload-icon-sym {
+    font-size: 48px !important;
+    color: var(--muted);
+    background: var(--surface-hover);
+    padding: 16px;
+    border-radius: var(--radius-full);
+    transition: all var(--t-fast) var(--ease);
+}
+.upload-area:hover .upload-icon-sym {
+    color: var(--primary);
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+.upload-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+}
+.upload-hint {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+
+
+
+.chip span .material-symbols-outlined {
+    font-size: 18px;
+}

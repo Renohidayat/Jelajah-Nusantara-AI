@@ -384,8 +384,8 @@ window.generateItinerary = async function () {
     
     const origin = document.getElementById('origin').value.trim()
     const destination = document.getElementById('destination').value.trim()
-    const duration = document.getElementById('duration').value
-    const budget = document.getElementById('budget').value
+    const duration = document.querySelector('input[name="duration"]:checked')?.value
+    const budget = document.querySelector('input[name="budget"]:checked')?.value
     const styleEl = document.querySelector('input[name="style"]:checked')
     const style = styleEl?.value || ''
 
