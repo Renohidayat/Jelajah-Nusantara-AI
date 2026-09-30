@@ -3016,3 +3016,60 @@ body.modal-open {
 
 .modal-box:focus { outline: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+
+/* ── SEO Content Sections ──────────────────────────────────────── */
+.seo-sections {
+    margin-top: var(--sp-section);
+    padding-bottom: var(--sp-section);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-section);
+}
+.seo-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: var(--sp-lg);
+    color: var(--ink);
+    text-align: center;
+}
+.seo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--sp-lg);
+}
+.seo-card {
+    background-color: var(--surface);
+    padding: var(--sp-lg);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border-soft);
+}
+.seo-card h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: var(--sp-sm);
+    color: var(--ink);
+}
+.seo-card p, .faq-item p {
+    font-size: 0.9375rem;
+    color: var(--body);
+    line-height: 1.6;
+}
+.seo-faq {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+    max-width: 768px;
+    margin: 0 auto;
+}
+.faq-item {
+    background-color: var(--surface);
+    padding: var(--sp-lg);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border-soft);
+}
+.faq-item h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin-bottom: var(--sp-xs);
+    color: var(--ink);
+}
