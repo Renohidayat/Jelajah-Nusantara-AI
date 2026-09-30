@@ -221,34 +221,87 @@ function initUI() {
             document.querySelectorAll('.chip span').forEach(s => s.style.removeProperty('all'))
         })
     })
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Jalankan pertama kali saat load
+    handleHashChange();
 }
 
-window.showTab = function (tab) {
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'))
-    document.getElementById(`tab-${tab}`)?.classList.add('active')
-
-    document.querySelectorAll('.page').forEach(p => {
-        p.classList.remove('active')
-        p.classList.add('hidden')
-    })
-    const page = document.getElementById(`page-${tab}`)
-    if (page) {
-        page.classList.remove('hidden')
-        page.classList.add('active')
+function handleHashChange() {
+    let hash = window.location.hash.substring(1);
+    const validTabs = ['planner', 'mytrips', 'community'];
+    const path = window.location.pathname;
+    const isIndex = path === '/' || path === '/index.html' || path === '';
+    
+    if (!validTabs.includes(hash)) {
+        if (isIndex) {
+            hash = 'planner';
+            window.history.replaceState(null, null, '#' + hash);
+        } else {
+            // Kita berada di halaman statis
+            updateActiveNav();
+            return;
+        }
+    } else {
+        if (!isIndex) {
+            // Jika kita berada di halaman statis tapi ada hash yang valid, 
+            // biarkan browser berpindah ke beranda lewat link, atau redirect manual
+            window.location.href = '/#' + hash;
+            return;
+        }
     }
 
-    if (tab === 'mytrips') loadMyTrips()
-    if (tab === 'community') loadCommunity()
+    // SPA Logic untuk index.html
+    document.querySelectorAll('.nav-tab, .mobile-menu-tab').forEach(t => {
+        t.classList.remove('active');
+        t.removeAttribute('aria-current');
+        if (t.dataset.hash === hash) {
+            t.classList.add('active');
+            t.setAttribute('aria-current', 'page');
+        }
+    });
 
-    // Close mobile menu when tab is clicked
-    const mobileMenu = document.getElementById('mobile-menu')
-    const hamburger = document.getElementById('hamburger-menu')
+    document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+        p.classList.add('hidden');
+    });
+    
+    const page = document.getElementById(`page-${hash}`);
+    if (page) {
+        page.classList.remove('hidden');
+        page.classList.add('active');
+    }
+
+    if (hash === 'mytrips' && typeof loadMyTrips === 'function') loadMyTrips();
+    if (hash === 'community' && typeof loadCommunity === 'function') loadCommunity();
+
+    // Tutup menu mobile
+    const mobileMenu = document.getElementById('mobile-menu');
+    const hamburger = document.getElementById('hamburger-menu');
     if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
-        mobileMenu.classList.add('hidden')
-        hamburger?.classList.remove('active')
+        mobileMenu.classList.add('hidden');
+        hamburger?.classList.remove('active');
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function updateActiveNav() {
+    const path = window.location.pathname;
+    document.querySelectorAll('.nav-tab, .mobile-menu-tab').forEach(t => {
+        t.classList.remove('active');
+        t.removeAttribute('aria-current');
+        // Jika path halaman statis sesuai dengan href tautan
+        if (t.getAttribute('href') === path || t.getAttribute('href') === path.split('/').pop()) {
+            t.classList.add('active');
+            t.setAttribute('aria-current', 'page');
+        }
+    });
+}
+
+// Fallback untuk tombol-tombol yang masih memanggil showTab secara eksplisit
+window.showTab = function (tab) {
+    window.location.hash = tab;
 }
 
 // Toggle Mobile Menu
