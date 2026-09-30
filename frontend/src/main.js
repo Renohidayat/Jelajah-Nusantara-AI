@@ -11,11 +11,30 @@ import { createIcons, icons } from 'lucide'
 let myTripsCache = [];
 let communityTripsCache = [];
 
-// Helper untuk menampilkan gambar destinasi dinamis menggunakan Pollinations AI
+// Helper untuk menampilkan gambar destinasi (Fallback ke Unsplash IDs terpilih)
 window.getDestImage = function(dest) {
-    if (!dest) return 'https://image.pollinations.ai/prompt/beautiful%20scenery%20tourism%20destination%20in%20indonesia?width=800&height=400&nologo=true';
-    const cleanDest = dest.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-    return `https://image.pollinations.ai/prompt/beautiful%20scenery%20tourism%20destination%20landmark%20in%20${encodeURIComponent(cleanDest)}%20indonesia?width=800&height=400&nologo=true`;
+    if (!dest) return 'https://images.unsplash.com/photo-1555899434-94d1368aa7af?auto=format&fit=crop&q=80&w=800';
+    
+    // Daftar foto-foto alam/landmark Indonesia terbaik di Unsplash
+    const ids = [
+        '1537996194471-e657df975ab4', // Bali temple
+        '1576426863848-c21f53c60b19', // Rinjani / Lombok
+        '1584814526543-157ad30cb855', // Borobudur / Jogja
+        '1518548419970-58e3b4079ab2', // Bromo
+        '1555899434-94d1368aa7af', // Jakarta landscape
+        '1604928141064-207cea6f560f', // Raja Ampat style
+        '1592398565158-b3d9d306b9b3', // Waterfall
+        '1505993597083-3b43ea98d2dc'  // Komodo island
+    ];
+    
+    // Simple hash function for consistent image per destination
+    let hash = 0;
+    for (let i = 0; i < dest.length; i++) {
+        hash = dest.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const idx = Math.abs(hash) % ids.length;
+    
+    return `https://images.unsplash.com/photo-${ids[idx]}?auto=format&fit=crop&q=80&w=800`;
 }
 
 // Configure DOMPurify for external links
