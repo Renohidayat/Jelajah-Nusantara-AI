@@ -37,6 +37,29 @@ window.getDestImage = function(dest) {
     return `https://images.unsplash.com/photo-${ids[idx]}?auto=format&fit=crop&q=80&w=800`;
 }
 
+// Fetch images from Wikipedia for elements with data-wiki-dest
+window.fetchWikiImages = async function() {
+    const imgs = document.querySelectorAll('img[data-wiki-dest]');
+    for (const img of imgs) {
+        if (img.dataset.wikiLoading) continue;
+        img.dataset.wikiLoading = 'true';
+        const dest = img.getAttribute('data-wiki-dest');
+        try {
+            // Get first keyword of destination for broader search
+            const query = dest.split(',')[0].trim();
+            const url = `https://id.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&prop=pageimages&format=json&pithumbsize=800&origin=*`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data && data.query && data.query.pages) {
+                const pageId = Object.keys(data.query.pages)[0];
+                if (data.query.pages[pageId].thumbnail) {
+                    img.src = data.query.pages[pageId].thumbnail.source;
+                }
+            }
+        } catch(e) {}
+    }
+}
+
 // Configure DOMPurify for external links
 DOMPurify.addHook('afterSanitizeAttributes', function(node) {
     if (node.nodeName && node.nodeName.toLowerCase() === 'a') {
@@ -698,6 +721,7 @@ async function loadMyTrips() {
             const card = createTripCard(trip, { showActions: true, delay: i * 0.05 })
             grid.appendChild(card)
         })
+        if (window.fetchWikiImages) fetchWikiImages();
     } catch (err) {
         loading.classList.add('hidden')
         showToast('Gagal memuat perjalananmu: ' + err.message, 'error')
@@ -741,6 +765,7 @@ async function loadCommunity() {
             const card = createTripCard(trip, { showActions: false, delay: i * 0.04 })
             grid.appendChild(card)
         })
+        if (window.fetchWikiImages) fetchWikiImages();
     } catch (err) {
         loading.classList.add('hidden')
         showToast('Gagal memuat komunitas: ' + err.message, 'error')
@@ -817,7 +842,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
 
     card.innerHTML = DOMPurify.sanitize(`
     <div class="trip-card-cover">
-      <img src="${destImage}" alt="${dest}" loading="lazy" />
+      <img src="${destImage}" data-wiki-dest="${dest}" alt="${dest}" loading="lazy" />
       <div class="trip-card-cover-overlay"></div>
       <div class="trip-card-dest">${dest}</div>
     </div>
