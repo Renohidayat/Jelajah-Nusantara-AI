@@ -1,0 +1,57 @@
+    <!-- ═══════════════════════════ NAVBAR ═══ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-inner">
+            <a class="nav-logo" href="/">
+                <i data-lucide="map" class="nav-logo-icon"></i>
+                <span class="logo-text">Jelajah<strong>Nusantara</strong></span>
+            </a>
+
+            <div class="nav-tabs">
+                <a class="nav-tab" href="/#planner" data-hash="planner">Planner</a>
+                <a class="nav-tab" href="/#mytrips" data-hash="mytrips">Perjalananku</a>
+                <a class="nav-tab" href="/#community" data-hash="community">Komunitas</a>
+            </div>
+
+            <div class="nav-auth" id="nav-auth">
+                <button class="btn-primary" id="btn-login" onclick="handleLogin()">
+                    Masuk
+                </button>
+                <div class="user-info hidden" id="user-info">
+                    <img class="user-avatar" id="user-avatar" src="" alt="Avatar" />
+                    <span class="user-name" id="user-name"></span>
+                    <button class="btn-ghost" onclick="handleLogout()">Keluar</button>
+                </div>
+            </div>
+
+            <!-- Hamburger Menu Button -->
+            <button class="hamburger" id="hamburger-menu" onclick="toggleMobileMenu()">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Drawer -->
+    <div class="mobile-menu hidden" id="mobile-menu">
+        <div class="mobile-menu-content">
+            <a class="mobile-menu-tab" href="/#planner" data-hash="planner">Planner</a>
+            <a class="mobile-menu-tab" href="/#mytrips" data-hash="mytrips">Perjalananku</a>
+            <a class="mobile-menu-tab" href="/#community" data-hash="community">Komunitas</a>
+            
+            <div class="mobile-menu-divider"></div>
+            
+            <button class="btn-primary" id="mobile-btn-login" onclick="handleLogin()">
+                Masuk
+            </button>
+            
+            <div class="mobile-user-profile hidden" id="mobile-user-profile">
+                <div class="mobile-user-details">
+                    <img class="mobile-user-avatar" id="mobile-user-avatar" src="" alt="Avatar" />
+                    <span class="mobile-user-name" id="mobile-user-name">Traveler</span>
+                </div>
+                <button class="btn-ghost" id="mobile-btn-logout" onclick="handleLogout()">
+                    <i data-lucide="log-out"></i>
+                    Keluar
+                </button>
+            </div>
+        </div>
+    </div>
