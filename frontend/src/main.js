@@ -8,6 +8,8 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { createIcons, icons } from 'lucide'
 
+let myTripsCache = [];
+let communityTripsCache = [];
 // Configure DOMPurify for external links
 DOMPurify.addHook('afterSanitizeAttributes', function(node) {
     if (node.nodeName && node.nodeName.toLowerCase() === 'a') {
