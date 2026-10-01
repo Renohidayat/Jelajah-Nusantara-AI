@@ -29,6 +29,9 @@ export default defineConfig({
             },
         },
     },
+    esbuild: {
+        legalComments: 'none',
+    },
     build: {
         outDir: 'dist',
         sourcemap: false,
