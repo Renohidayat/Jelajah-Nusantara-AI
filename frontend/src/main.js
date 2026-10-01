@@ -1651,8 +1651,30 @@ function buildMarkerIcon(color, label) {
     })
 }
 
-/** Fetch driving route from OSRM Public API between two coordinates */
+const osrmCache = new Map();
+let lastOsrmCall = 0;
+
+/** Fetch driving route from OSRM Public API between two coordinates with caching and rate limit */
 async function fetchOsrmRoute(from, to) {
+    const key = `${from[0].toFixed(5)},${from[1].toFixed(5)}-${to[0].toFixed(5)},${to[1].toFixed(5)}`;
+    if (osrmCache.has(key)) {
+        return osrmCache.get(key);
+    }
+
+    // Rate limit: minimal 1 detik antar request ke OSRM Public API
+    let delay = 0;
+    const now = Date.now();
+    if (now - lastOsrmCall < 1100) {
+        delay = 1100 - (now - lastOsrmCall);
+        lastOsrmCall += 1100; // Majukan target waktu untuk request berikutnya
+    } else {
+        lastOsrmCall = now;
+    }
+
+    if (delay > 0) {
+        await new Promise(r => setTimeout(r, delay));
+    }
+
     try {
         const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`
         const res = await fetch(url, { signal: AbortSignal.timeout(6000) })
@@ -1660,11 +1682,13 @@ async function fetchOsrmRoute(from, to) {
         const data = await res.json()
         if (!data.routes || data.routes.length === 0) return null
         const route = data.routes[0]
-        return {
+        const result = {
             coords: route.geometry.coordinates.map(c => [c[1], c[0]]), // [lng,lat] → [lat,lng]
             distanceM: route.legs[0].distance,
             durationS: route.legs[0].duration,
-        }
+        };
+        osrmCache.set(key, result);
+        return result;
     } catch {
         return null
     }
@@ -2100,7 +2124,7 @@ window.discoverNearby = async function(type) {
 
     if (!overpassQuery) return;
 
-    const queryStr = `[out:json][timeout:15];(${overpassQuery});out;`;
+    const queryStr = `[out:json][timeout:10];(${overpassQuery});out;`;
     const queryUrl = `https://overpass-api.de/api/interpreter`;
     
     document.getElementById('discovery-loading').classList.remove('hidden');
@@ -2117,7 +2141,13 @@ window.discoverNearby = async function(type) {
             },
             body: 'data=' + encodeURIComponent(queryStr)
         });
-        if (!res.ok) throw new Error('Overpass API error');
+        
+        if (!res.ok) {
+            if (res.status === 429) throw new Error('429');
+            if (res.status === 504) throw new Error('504');
+            throw new Error('Overpass API error');
+        }
+        
         const data = await res.json();
         
         clearDiscovery(); // Hapus markah lama sebelum menampilkan yang baru
@@ -2150,7 +2180,13 @@ window.discoverNearby = async function(type) {
             showToast(`Menampilkan ${nodes.length} lokasi ${type} di peta.`, 'success');
         }
     } catch (err) {
-        showToast('Gagal mencari lokasi sekitar. Silakan coba lagi.', 'error');
+        if (err.message === '429') {
+            showToast('Server pencarian sibuk (Rate Limit). Harap tunggu beberapa detik lalu coba lagi.', 'error');
+        } else if (err.message === '504') {
+            showToast('Area terlalu luas atau server lambat (Timeout). Silakan perbesar (zoom in) peta lalu coba lagi.', 'error');
+        } else {
+            showToast('Gagal mencari lokasi sekitar. Silakan coba lagi.', 'error');
+        }
     } finally {
         document.getElementById('discovery-loading').classList.add('hidden');
         btns.forEach(btn => btn.disabled = false);
