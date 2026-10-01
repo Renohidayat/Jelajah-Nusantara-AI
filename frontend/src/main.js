@@ -543,6 +543,82 @@ function setGenerateLoading(mode, loading) {
 // ══════════════════════════════════════════════════════════════
 //  RESULT RENDERING
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+//  WEATHER — Open-Meteo real-time forecast
+// ══════════════════════════════════════════════════════════════
+
+const WMO_CODES = {
+    0: { label: 'Cerah', icon: '☀️' },
+    1: { label: 'Sebagian Cerah', icon: '🌤️' },
+    2: { label: 'Berawan Sebagian', icon: '⛅' },
+    3: { label: 'Mendung', icon: '☁️' },
+    45: { label: 'Berkabut', icon: '🌫️' }, 48: { label: 'Berkabut', icon: '🌫️' },
+    51: { label: 'Gerimis', icon: '🌦️' }, 53: { label: 'Gerimis', icon: '🌦️' }, 55: { label: 'Gerimis', icon: '🌦️' },
+    61: { label: 'Hujan Ringan', icon: '🌧️' }, 63: { label: 'Hujan Sedang', icon: '🌧️' }, 65: { label: 'Hujan Lebat', icon: '🌧️' },
+    71: { label: 'Salju Ringan', icon: '🌨️' }, 73: { label: 'Salju Sedang', icon: '🌨️' }, 75: { label: 'Salju Lebat', icon: '🌨️' },
+    80: { label: 'Hujan Lokal', icon: '🌦️' }, 81: { label: 'Hujan Deras Lokal', icon: '⛈️' }, 82: { label: 'Hujan Deras', icon: '⛈️' },
+    95: { label: 'Badai Petir', icon: '⛈️' }, 96: { label: 'Badai + Hujan Es', icon: '⛈️' }, 99: { label: 'Badai + Hujan Es', icon: '⛈️' },
+}
+const EXTREME_CODES = new Set([65, 80, 81, 82, 95, 96, 99])
+
+async function fetchAndInjectWeather(lat, lng, duration) {
+    try {
+        const departureDateEl = document.getElementById('departure-date')
+        const departureDate = departureDateEl?.value
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FJakarta&forecast_days=14`
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data.daily) return
+
+        const { time, weathercode, temperature_2m_max, temperature_2m_min } = data.daily
+
+        // Find offset from departure date to first available forecast date
+        let startIdx = 0
+        if (departureDate) {
+            const depTs = new Date(departureDate).getTime()
+            startIdx = time.findIndex(t => new Date(t).getTime() >= depTs)
+            if (startIdx < 0) startIdx = 0
+        }
+
+        // Inject weather widget into each day heading in result-body
+        const resultBody = document.getElementById('result-body')
+        if (!resultBody) return
+
+        const dayHeadings = resultBody.querySelectorAll('h2, h3')
+        let dayCount = 0
+
+        for (const heading of dayHeadings) {
+            if (!heading.textContent.match(/hari\s*\d+/i)) continue
+            const idx = startIdx + dayCount
+            if (idx >= time.length) break
+
+            const code = weathercode[idx]
+            const wmo = WMO_CODES[code] || { label: 'Variabel', icon: '🌡️' }
+            const tmax = Math.round(temperature_2m_max[idx])
+            const tmin = Math.round(temperature_2m_min[idx])
+            const isExtreme = EXTREME_CODES.has(code)
+
+            const badge = document.createElement('span')
+            badge.className = `weather-badge${isExtreme ? ' weather-badge--extreme' : ''}`
+            badge.title = `${wmo.label} · ${tmin}°–${tmax}°C`
+            badge.innerHTML = `${wmo.icon} <span>${tmin}°–${tmax}°C</span>`
+            heading.appendChild(badge)
+
+            if (isExtreme) {
+                const warn = document.createElement('div')
+                warn.className = 'weather-warning'
+                warn.innerHTML = `⚠️ Prakiraan cuaca ekstrem pada hari ini: <strong>${wmo.label}</strong>. Pertimbangkan aktivitas alternatif indoor.`
+                heading.after(warn)
+            }
+
+            dayCount++
+            if (dayCount >= duration) break
+        }
+    } catch { /* graceful: cuaca gagal tidak merusak apapun */ }
+}
+
 function showResult(itineraryText, tripData, budgetBreakdown) {
     const section = document.getElementById('result-section')
     const body = document.getElementById('result-body')
@@ -585,6 +661,7 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
     resetMapState()
     fetchAndRenderMap(itineraryText, tripData.duration)
 }
+
 
 function hideResult() {
     document.getElementById('result-section').classList.add('hidden')
@@ -1269,12 +1346,20 @@ async function fetchAndRenderMap(itineraryText, duration) {
 
             mapDays = data.days
 
+            // Inject real-time weather once we have the first location's coordinates
+            if (data.days.length > 0 && data.days[0].locations.length > 0) {
+                const firstLoc = data.days[0].locations[0]
+                const tripDuration = parseInt(duration) || data.days.length
+                fetchAndInjectWeather(firstLoc.lat, firstLoc.lng, tripDuration)
+            }
+
             const mapTabActive = !document.getElementById('view-map').classList.contains('hidden')
             if (mapTabActive) {
                 document.getElementById('map-loading-state').classList.add('hidden')
                 renderLeafletMap(mapDays)
             }
             return // success
+
 
         } catch (err) {
             if (mapExtractAborted) return
