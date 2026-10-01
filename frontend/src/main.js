@@ -461,18 +461,93 @@ window.generateItinerary = async function () {
             headers,
             body: JSON.stringify({ origin, destination, duration, budget, style }),
         })
-
-        let data
-        const text = await resp.text()
-        try {
-            data = JSON.parse(text)
-        } catch {
-            throw new Error(!resp.ok ? `Server sedang memproses atau sibuk (HTTP ${resp.status}). Coba beberapa saat lagi.` : 'Respon server tidak valid.')
+        
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({ error: 'Gagal' }))
+            throw new Error(errData.error || `Server error HTTP ${resp.status}`)
         }
-        if (!resp.ok) throw new Error(data.error || 'Gagal menghasilkan itinerary.')
 
-        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
-        showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
+        const section = document.getElementById('result-section')
+        const body = document.getElementById('result-body')
+        
+        section.classList.remove('hidden')
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        body.innerHTML = '<span class="cursor"></span>'
+        
+        // Sembunyikan tab lain sementara loading stream
+        document.getElementById('vtab-budget')?.classList.add('hidden')
+        document.getElementById('vtab-map')?.classList.add('hidden')
+        document.querySelector('.budget-container')?.classList.add('hidden')
+        document.getElementById('route-map')?.classList.add('hidden')
+
+        const reader = resp.body.getReader()
+        const decoder = new TextDecoder("utf-8")
+        let buffer = ''
+        let fullText = ''
+        let isBudgetPart = false
+        let budgetJsonStr = ''
+        let tripData = null
+
+        while (true) {
+            const { value, done } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            
+            const lines = buffer.split('\n\n')
+            buffer = lines.pop()
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6)
+                    let data;
+                    try { data = JSON.parse(dataStr) } catch(e) { continue }
+                    
+                    if (data.type === 'meta') {
+                        tripData = data.tripData
+                    } else if (data.type === 'chunk') {
+                        if (!isBudgetPart) {
+                            fullText += data.content
+                            if (fullText.includes('---BUDGET---')) {
+                                isBudgetPart = true
+                                const parts = fullText.split('---BUDGET---')
+                                fullText = parts[0]
+                                budgetJsonStr = parts[1] || ''
+                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                            } else {
+                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                            }
+                        } else {
+                            budgetJsonStr += data.content
+                        }
+                    } else if (data.type === 'error') {
+                        throw new Error(data.error)
+                    }
+                }
+            }
+        }
+        
+        let budgetBreakdown = null
+        if (budgetJsonStr.trim()) {
+            try {
+                // Bersihkan kemungkinan backtick markdown dari JSON response
+                let cleanJson = budgetJsonStr.trim()
+                if (cleanJson.startsWith('```json')) cleanJson = cleanJson.replace(/^```json/, '')
+                if (cleanJson.startsWith('```')) cleanJson = cleanJson.replace(/^```/, '')
+                if (cleanJson.endsWith('```')) cleanJson = cleanJson.slice(0, -3)
+                
+                const categories = JSON.parse(cleanJson.trim())
+                budgetBreakdown = {
+                    categories,
+                    total: categories.reduce((s, i) => s + (i.amount || 0), 0),
+                    currency: "IDR"
+                }
+            } catch(e) {
+                console.warn('Gagal parse budget JSON dari AI:', e)
+            }
+        }
+
+        lastResult = { itineraryText: fullText, tripData: tripData || { origin, destination, duration, budget, style }, budgetBreakdown }
+        showResult(fullText, lastResult.tripData, budgetBreakdown)
         showToast('Itinerary berhasil dibuat!', 'success')
     } catch (err) {
         showError(err.message)
@@ -508,17 +583,91 @@ window.generateVision = async function () {
             body: formData,
         })
 
-        let data
-        const text = await resp.text()
-        try {
-            data = JSON.parse(text)
-        } catch {
-            throw new Error(!resp.ok ? `Server sedang memproses atau sibuk (HTTP ${resp.status}). Coba beberapa saat lagi.` : 'Respon server tidak valid.')
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({ error: 'Gagal' }))
+            throw new Error(errData.error || `Server error HTTP ${resp.status}`)
         }
-        if (!resp.ok) throw new Error(data.error || 'Gagal menganalisis gambar.')
 
-        lastResult = { itineraryText: data.itineraryText, tripData: data.tripData, budgetBreakdown: data.budgetBreakdown }
-        showResult(data.itineraryText, data.tripData, data.budgetBreakdown)
+        const section = document.getElementById('result-section')
+        const body = document.getElementById('result-body')
+        
+        section.classList.remove('hidden')
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        body.innerHTML = '<span class="cursor"></span>'
+        
+        // Sembunyikan tab lain sementara loading stream
+        document.getElementById('vtab-budget')?.classList.add('hidden')
+        document.getElementById('vtab-map')?.classList.add('hidden')
+        document.querySelector('.budget-container')?.classList.add('hidden')
+        document.getElementById('route-map')?.classList.add('hidden')
+
+        const reader = resp.body.getReader()
+        const decoder = new TextDecoder("utf-8")
+        let buffer = ''
+        let fullText = ''
+        let isBudgetPart = false
+        let budgetJsonStr = ''
+        let tripData = null
+
+        while (true) {
+            const { value, done } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            
+            const lines = buffer.split('\n\n')
+            buffer = lines.pop()
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.substring(6)
+                    let data;
+                    try { data = JSON.parse(dataStr) } catch(e) { continue }
+                    
+                    if (data.type === 'meta') {
+                        tripData = data.tripData
+                    } else if (data.type === 'chunk') {
+                        if (!isBudgetPart) {
+                            fullText += data.content
+                            if (fullText.includes('---BUDGET---')) {
+                                isBudgetPart = true
+                                const parts = fullText.split('---BUDGET---')
+                                fullText = parts[0]
+                                budgetJsonStr = parts[1] || ''
+                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                            } else {
+                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                            }
+                        } else {
+                            budgetJsonStr += data.content
+                        }
+                    } else if (data.type === 'error') {
+                        throw new Error(data.error)
+                    }
+                }
+            }
+        }
+        
+        let budgetBreakdown = null
+        if (budgetJsonStr.trim()) {
+            try {
+                let cleanJson = budgetJsonStr.trim()
+                if (cleanJson.startsWith('```json')) cleanJson = cleanJson.replace(/^```json/, '')
+                if (cleanJson.startsWith('```')) cleanJson = cleanJson.replace(/^```/, '')
+                if (cleanJson.endsWith('```')) cleanJson = cleanJson.slice(0, -3)
+                
+                const categories = JSON.parse(cleanJson.trim())
+                budgetBreakdown = {
+                    categories,
+                    total: categories.reduce((s, i) => s + (i.amount || 0), 0),
+                    currency: "IDR"
+                }
+            } catch(e) {
+                console.warn('Gagal parse budget JSON dari AI:', e)
+            }
+        }
+
+        lastResult = { itineraryText: fullText, tripData: tripData || { destination: hint || 'Destinasi dari Gambar' }, budgetBreakdown }
+        showResult(fullText, lastResult.tripData, budgetBreakdown)
         showToast('Foto berhasil dianalisis!', 'success')
     } catch (err) {
         showError(err.message)
