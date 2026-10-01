@@ -181,19 +181,39 @@ async function boot() {
 //  AUTH
 // ══════════════════════════════════════════════════════════════
 
-window.handleLogin = async function () {
+window.handleLogin = function () {
+    const overlay = document.getElementById('modal-overlay');
+    const body = document.getElementById('modal-body');
+    if(!overlay || !body) return;
+
+    body.innerHTML = `
+        <div class="auth-modal">
+            <div class="auth-modal-header">
+                <span class="material-symbols-outlined auth-modal-icon">explore</span>
+                <h2>Masuk ke Jelajah Nusantara</h2>
+            </div>
+            <p class="auth-modal-desc">Simpan itinerary perjalananmu dan bagikan pengalamanmu dengan komunitas traveler lainnya.</p>
+            <button class="btn btn-primary auth-btn-google" onclick="executeLogin()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="auth-google-logo">
+                Lanjutkan dengan Google
+            </button>
+        </div>
+    `;
+    overlay.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+}
+
+window.executeLogin = async function () {
     if (!auth) return showToast('Aplikasi belum siap. Coba refresh.', 'error')
     try {
         const provider = new GoogleAuthProvider()
         provider.addScope('profile')
         provider.addScope('email')
-        // Gunakan popup — tidak redirect keluar halaman, tidak ada race condition
         const result = await signInWithPopup(auth, provider)
-        // onAuthStateChanged akan otomatis update UI
+        if(typeof closeModal === 'function') closeModal();
         showToast(`Selamat datang, ${result.user.displayName?.split(' ')[0] || 'Traveler'}!`, 'success')
     } catch (err) {
         console.error('Login error:', err)
-        // Abaikan error jika user menutup popup sendiri
         if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
             if (err.code === 'auth/unauthorized-domain') {
                 showToast('Domain Vercel belum diizinkan di Firebase Console (Authorized Domains).', 'error')
@@ -214,11 +234,34 @@ async function getAuthToken() {
     }
 }
 
-window.handleLogout = async function () {
+window.handleLogout = function () {
+    const overlay = document.getElementById('modal-overlay');
+    const body = document.getElementById('modal-body');
+    if(!overlay || !body) return;
+
+    body.innerHTML = `
+        <div class="auth-modal auth-modal--danger">
+            <div class="auth-modal-header">
+                <span class="material-symbols-outlined auth-modal-icon text-danger">logout</span>
+                <h2>Keluar Akun</h2>
+            </div>
+            <p class="auth-modal-desc">Apakah kamu yakin ingin keluar? Kamu perlu masuk lagi untuk menyimpan itinerary baru.</p>
+            <div class="auth-modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+                <button class="btn btn-danger" onclick="executeLogout()">Ya, Keluar</button>
+            </div>
+        </div>
+    `;
+    overlay.classList.remove('hidden');
+    document.body.classList.add('modal-open');
+}
+
+window.executeLogout = async function () {
     try {
         await signOut(auth)
         currentUser = null
         updateAuthUI(null)
+        if(typeof closeModal === 'function') closeModal();
         showToast('Kamu berhasil keluar. Sampai jumpa!')
     } catch (err) {
         showToast('Gagal keluar. Coba lagi.', 'error')
@@ -262,6 +305,11 @@ function updateAuthUI(user) {
         // Update UI Mobile Menu
         if (mobileBtnLogin) mobileBtnLogin.classList.remove('hidden')
         if (mobileUserProfile) mobileUserProfile.classList.add('hidden')
+    }
+
+    // Refresh data tab saat ini (misalnya Perjalananku) setelah state berubah
+    if (window.location.hash === '#mytrips' && typeof loadMyTrips === 'function') {
+        loadMyTrips();
     }
 }
 

@@ -3174,3 +3174,71 @@ body.modal-open {
     color: var(--muted);
     margin-left: 4px;
 }
+
+/* ══ AUTH MODAL ══════════════════════════════════════════ */
+.auth-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--sp-xl) var(--sp-lg);
+}
+.auth-modal-header {
+    margin-bottom: var(--sp-md);
+}
+.auth-modal-icon {
+    font-size: 3rem;
+    color: var(--color-primary);
+    margin-bottom: var(--sp-sm);
+}
+.auth-modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+.auth-modal-desc {
+    color: var(--color-text-light);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: var(--sp-xl);
+    max-width: 300px;
+}
+.auth-btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-sm);
+    width: 100%;
+    max-width: 300px;
+    background-color: white;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.auth-btn-google:hover {
+    background-color: var(--color-bg-alt);
+    border-color: var(--color-text-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.auth-google-logo {
+    width: 20px;
+    height: 20px;
+}
+
+/* Logout Modal */
+.auth-modal--danger .auth-modal-icon {
+    color: var(--color-danger);
+}
+.auth-modal-actions {
+    display: flex;
+    gap: var(--sp-md);
+    width: 100%;
+    justify-content: center;
+}
+.auth-modal-actions button {
+    flex: 1;
+    max-width: 140px;
+}
+
