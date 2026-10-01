@@ -805,6 +805,7 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
 
     section.classList.remove('hidden')
     section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById('vtab-map')?.classList.remove('hidden')
 
     // Reset map view to itinerary tab and kick off background extraction
     switchResultView('itinerary')
