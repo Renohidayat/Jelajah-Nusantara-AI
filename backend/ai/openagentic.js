@@ -108,6 +108,134 @@ async function doFetchCompletion(modelName, messages, config) {
     }
 }
 
+async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), config.timeoutMs);
+    const start = Date.now();
+    try {
+        const payload = {
+            model: modelName,
+            messages,
+            stream: true
+        };
+        const res = await fetch(`${config.baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${config.apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        
+        if (!res.ok) {
+            const duration = Date.now() - start;
+            const data = await res.json().catch(() => null);
+            const errCode = res.status;
+            const msg = data?.error?.message || "Unknown error";
+            console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
+            throw { status: errCode, message: msg };
+        }
+        
+        const reader = res.body;
+        let buffer = '';
+        for await (const chunk of reader) {
+            buffer += chunk.toString('utf-8');
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // last incomplete line
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('data: ')) {
+                    const dataStr = trimmed.substring(6);
+                    if (dataStr === '[DONE]') continue;
+                    try {
+                        const data = JSON.parse(dataStr);
+                        const content = data.choices?.[0]?.delta?.content;
+                        if (content) onChunk(content);
+                    } catch (e) {
+                        // ignore parse error for incomplete json chunks
+                    }
+                }
+            }
+        }
+        
+        const duration = Date.now() - start;
+        console.log(`✅ AI Stream Success [${modelName}] (Duration: ${duration}ms)`);
+        return true;
+    } finally {
+        clearTimeout(id);
+    }
+}
+
+export async function generateContentStream(systemPrompt, userPrompt, isVision = false, imageBase64 = null, imageMime = null, onChunk) {
+    if (isVision && !aiConfig.visionEnabled) {
+        throw { status: 503, publicMessage: "Fitur analisis gambar sedang dinonaktifkan." };
+    }
+    if (isVision && imageBase64) {
+        const sizeBytes = Buffer.from(imageBase64, 'base64').length;
+        if (sizeBytes > aiConfig.maxImageBytes) {
+            throw { status: 400, publicMessage: `Ukuran gambar terlalu besar. Maksimal ${Math.round(aiConfig.maxImageBytes/1024/1024)} MB.` };
+        }
+    }
+
+    const messages = [
+        { role: "system", content: systemPrompt }
+    ];
+
+    if (isVision && imageBase64) {
+        messages.push({
+            role: "user",
+            content: [
+                { type: "text", text: userPrompt },
+                { type: "image_url", image_url: { url: `data:${imageMime};base64,${imageBase64}` } }
+            ]
+        });
+    } else {
+        messages.push({ role: "user", content: userPrompt });
+    }
+
+    const models = isVision 
+        ? [aiConfig.visionModel, ...aiConfig.visionFallbackModels] 
+        : [aiConfig.model, ...aiConfig.fallbackModels];
+    let lastError = null;
+
+    for (const model of models) {
+        let attempt = 0;
+        while (attempt <= aiConfig.maxRetries) {
+            try {
+                await doFetchStreamCompletion(model, messages, aiConfig, onChunk);
+                return; // success
+            } catch (err) {
+                lastError = err;
+                const isTimeout = err.name === 'AbortError' || err.type === 'aborted';
+                const status = err.status || (isTimeout ? 408 : 500);
+                
+                if (status === 401 || status === 402 || status === 403) {
+                    console.error(`❌ API key bermasalah (HTTP ${status}). Tidak di-retry.`);
+                    throw { status, publicMessage: "Kunci API tidak valid atau kedaluwarsa. Hubungi admin." };
+                }
+                if (status === 404) {
+                    console.warn(`⚠️ Model ${model} tidak tersedia. Pindah model cadangan.`);
+                    break;
+                }
+                if (status === 429 || status >= 500 || isTimeout) {
+                    attempt++;
+                    if (attempt <= aiConfig.maxRetries) {
+                        const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
+                        console.warn(`⚠️ Stream Retry ${attempt}/${aiConfig.maxRetries} setelah ${delayMs}ms...`);
+                        await sleep(delayMs);
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    
+    throw { status: lastError?.status || 500, publicMessage: lastError?.publicMessage || "Gagal membuat itinerary." };
+}
+
 export async function generateContent(systemPrompt, userPrompt, isVision = false, imageBase64 = null, imageMime = null) {
     if (isVision && !aiConfig.visionEnabled) {
         throw { status: 503, publicMessage: "Fitur analisis gambar sedang dinonaktifkan." };

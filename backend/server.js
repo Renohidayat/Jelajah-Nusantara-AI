@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { generateContent } from "./ai/openagentic.js";
+import { generateContent, generateContentStream } from "./ai/openagentic.js";
 import { rateLimit } from "express-rate-limit";
 import { fileTypeFromBuffer } from "file-type";
 
@@ -230,6 +230,23 @@ ATURAN:
 - PENTING: TOTAL BIAYA (penjumlahan seluruh "amount") ADALAH UNTUK KESELURUHAN GRUP/KELUARGA (BUKAN per orang). Total akhirnya wajib di bawah atau sama dengan: ("Estimasi Anggaran" harian * "Durasi Perjalanan"). Jangan membuat budget yang menggelembung!
 `;
 
+const buildItinerarySystemPromptStream = () => `Kamu adalah "Jelajah AI", asisten perjalanan terbaik di Indonesia yang ahli dalam merencanakan wisata domestik.
+TULISKAN ITINERARY LANGSUNG DALAM FORMAT MARKDOWN (tanpa blok JSON).
+Setelah seluruh teks itinerary selesai (termasuk penutup jika ada), KETIKKAN PERSIS BARIS BERIKUT SEBAGAI PEMISAH:
+---BUDGET---
+Di baris berikutnya, tuliskan HANYA JSON array berisi rincian budget, TANPA TEKS LAIN, TANPA MARKDOWN CODE BLOCKS.
+Contoh JSON budget di bagian akhir:
+[
+  {"name": "Transportasi", "amount": 100000},
+  {"name": "Akomodasi", "amount": 200000}
+]
+
+ATURAN:
+- Format itinerary bebas asalkan rapi, menarik, dan detail per hari. Jangan buat tabel budget di dalam teks.
+- Bagian JSON harus berupa array objek murni. Biaya dalam angka bulat (tanpa Rp/titik).
+- PENTING: TOTAL BIAYA ADALAH UNTUK KESELURUHAN GRUP/KELUARGA. Total akhirnya wajib di bawah atau sama dengan: ("Estimasi Anggaran" harian * "Durasi Perjalanan").
+`;
+
 const buildItineraryPrompt = ({ origin, destination, duration, budget, style }) => `
 Buatkan itinerary perjalanan yang detail, menarik, dan realistis berdasarkan informasi berikut:
 - **Asal Keberangkatan:** ${origin || "Tidak ditentukan"}
@@ -251,6 +268,18 @@ FORMAT JSON YANG WAJIB DIIKUTI:
     {"name": "Transportasi", "amount": 100000}
   ]
 }
+`;
+
+const buildVisionSystemPromptStream = () => `Kamu adalah "Jelajah AI", asisten perjalanan terbaik di Indonesia.
+TULISKAN ITINERARY LANGSUNG DALAM FORMAT MARKDOWN (tanpa blok JSON).
+Awali dengan "## 📸 Identifikasi Tempat", lalu ikuti dengan itinerary.
+Setelah seluruh teks itinerary selesai (termasuk penutup jika ada), KETIKKAN PERSIS BARIS BERIKUT SEBAGAI PEMISAH:
+---BUDGET---
+Di baris berikutnya, tuliskan HANYA JSON array berisi rincian budget, TANPA TEKS LAIN.
+Contoh:
+[
+  {"name": "Transportasi", "amount": 100000}
+]
 `;
 
 const buildVisionPrompt = (destination) => `
@@ -367,31 +396,31 @@ app.post("/api/generate", optionalVerifyToken, aiRateLimiter, async (req, res) =
         return res.status(400).json({ error: "Data destinasi, durasi, anggaran, dan gaya wisata wajib diisi." });
     }
 
+    // Set headers for Server-Sent Events (SSE)
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    
+    // Flush headers to ensure the client connects immediately
+    res.flushHeaders();
+
+    const tripData = { origin, destination, duration, budget, style };
+    res.write(`data: ${JSON.stringify({ type: 'meta', tripData })}\n\n`);
+
     try {
-        const systemPrompt = buildItinerarySystemPrompt();
+        const systemPrompt = buildItinerarySystemPromptStream();
         const userPrompt = buildItineraryPrompt({ origin, destination, duration, budget, style });
         
-        const data = await generateContent(systemPrompt, userPrompt, false);
-        
-        if (!data || !data.itinerary_markdown) {
-            throw { status: 502, publicMessage: "Respon AI tidak lengkap." };
-        }
-        
-        const budgetBreakdown = {
-            categories: data.budget || [],
-            total: (data.budget || []).reduce((sum, item) => sum + (item.amount || 0), 0),
-            currency: "IDR"
-        };
-        
-        res.json({
-            itineraryText: data.itinerary_markdown,
-            budgetBreakdown: budgetBreakdown.categories.length > 0 ? budgetBreakdown : null,
-            tripData: { origin, destination, duration, budget, style }
+        await generateContentStream(systemPrompt, userPrompt, (chunk) => {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
         });
+        
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (err) {
-        console.error("❌ Generate text error:", err);
-        res.status(err.status || 500).json({ error: err.publicMessage || "Gagal membuat itinerary." });
+        console.error("❌ Generate stream error:", err);
+        res.write(`data: ${JSON.stringify({ type: 'error', error: err.publicMessage || "Gagal membuat itinerary." })}\n\n`);
     }
+    res.end();
 });
 
 // ── 7.4  AI GENERATE — Vision / Image Upload ───
@@ -407,31 +436,29 @@ app.post("/api/generate-vision", optionalVerifyToken, aiVisionRateLimiter, uploa
     const base64Image = req.file.buffer.toString("base64");
     const { destination } = req.body;
     
+    // Set headers for SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+    
+    const tripData = { origin: "", destination: destination || "Berdasarkan Foto", duration: 3, budget: "Mid-Range", style: "Eksplorasi" };
+    res.write(`data: ${JSON.stringify({ type: 'meta', tripData })}\n\n`);
+
     try {
-        const systemPrompt = buildVisionSystemPrompt();
+        const systemPrompt = buildVisionSystemPromptStream();
         const userPrompt = buildVisionPrompt(destination);
         
-        const data = await generateContent(systemPrompt, userPrompt, true, base64Image, mimeType);
-        
-        if (!data || !data.itinerary_markdown) {
-            throw { status: 502, publicMessage: "Respon AI tidak lengkap." };
-        }
-        
-        const budgetBreakdown = {
-            categories: data.budget || [],
-            total: (data.budget || []).reduce((sum, item) => sum + (item.amount || 0), 0),
-            currency: "IDR"
-        };
-        
-        res.json({
-            itineraryText: data.itinerary_markdown,
-            budgetBreakdown: budgetBreakdown.categories.length > 0 ? budgetBreakdown : null,
-            tripData: { origin: "", destination: destination || "Berdasarkan Foto", duration: 3, budget: "Mid-Range", style: "Eksplorasi" }
+        await generateContentStream(systemPrompt, userPrompt, true, base64Image, mimeType, (chunk) => {
+            res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
         });
+        
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (err) {
         console.error("❌ Generate vision error:", err);
-        res.status(err.status || 500).json({ error: err.publicMessage || "Gagal menganalisis gambar." });
+        res.write(`data: ${JSON.stringify({ type: 'error', error: err.publicMessage || "Gagal menganalisis gambar." })}\n\n`);
     }
+    res.end();
 });
 
 // ── 7.5  SAVE ITINERARY ────────────────────────
