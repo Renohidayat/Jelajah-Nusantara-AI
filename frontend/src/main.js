@@ -2095,7 +2095,8 @@ window.discoverNearby = async function(type) {
 
     if (!overpassQuery) return;
 
-    const queryUrl = `https://overpass-api.de/api/interpreter?data=[out:json][timeout:15];(${overpassQuery});out;`;
+    const queryStr = `[out:json][timeout:15];(${overpassQuery});out;`;
+    const queryUrl = `https://overpass-api.de/api/interpreter`;
     
     document.getElementById('discovery-loading').classList.remove('hidden');
     
@@ -2104,7 +2105,10 @@ window.discoverNearby = async function(type) {
     btns.forEach(btn => btn.disabled = true);
 
     try {
-        const res = await fetch(queryUrl);
+        const res = await fetch(queryUrl, {
+            method: 'POST',
+            body: queryStr
+        });
         if (!res.ok) throw new Error('Overpass API error');
         const data = await res.json();
         

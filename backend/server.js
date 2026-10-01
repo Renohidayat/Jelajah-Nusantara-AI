@@ -241,10 +241,11 @@ Contoh JSON budget di bagian akhir:
   {"name": "Akomodasi", "amount": 200000}
 ]
 
-ATURAN:
+ATURAN PENTING SOAL ANGGARAN:
 - Format itinerary bebas asalkan rapi, menarik, dan detail per hari. Jangan buat tabel budget di dalam teks.
-- Bagian JSON harus berupa array objek murni. Biaya dalam angka bulat (tanpa Rp/titik).
-- PENTING: TOTAL BIAYA ADALAH UNTUK KESELURUHAN GRUP/KELUARGA. Total akhirnya wajib di bawah atau sama dengan: ("Estimasi Anggaran" harian * "Durasi Perjalanan").
+- Bagian JSON di akhir harus berupa array objek murni. Biaya dalam angka bulat (tanpa Rp/titik).
+- TOTAL KESELURUHAN BIAYA (penjumlahan seluruh "amount") ADALAH UNTUK KESELURUHAN GRUP/KELUARGA.
+- BATAS MAKSIMAL ANGGARAN: Jika Estimasi Anggaran adalah "Rp 1-3 juta/hari" dan Durasi "3 hari", batas maksimal total adalah 3 juta x 3 hari = 9 juta. Total dari JSON kamu TIDAK BOLEH lebih dari batas maksimal yang didapat dari perkalian tersebut! Sesuaikan fasilitas dengan budget.
 `;
 
 const buildItineraryPrompt = ({ origin, destination, duration, budget, style }) => `
@@ -252,7 +253,7 @@ Buatkan itinerary perjalanan yang detail, menarik, dan realistis berdasarkan inf
 - **Asal Keberangkatan:** ${origin || "Tidak ditentukan"}
 - **Destinasi Utama:** ${destination}
 - **Durasi Perjalanan:** ${duration} hari
-- **Estimasi Anggaran:** ${budget} (BIAYA TOTAL HARUS DISESUAIKAN DENGAN BATAS ANGGARAN INI)
+- **Estimasi Anggaran Harian:** ${budget} (KALIKAN estimasi ini dengan ${duration} hari untuk mendapat batas maksimal. BIAYA TOTAL KESELURUHAN HARUS DI BAWAH ATAU SAMA DENGAN BATAS MAKSIMAL TERSEBUT)
 - **Gaya Wisata:** ${style}
 `;
 
