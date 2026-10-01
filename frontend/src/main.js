@@ -2065,6 +2065,11 @@ window.filterCommunity = function() {
 window.discoverNearby = async function(type) {
     if (!leafletMap) return;
 
+    if (leafletMap.getZoom() < 13) {
+        showToast('Area peta terlalu luas. Silakan zoom in (perbesar) peta terlebih dahulu.', 'warning');
+        return;
+    }
+
     const bounds = leafletMap.getBounds();
     const s = bounds.getSouth();
     const w = bounds.getWest();
@@ -2107,7 +2112,10 @@ window.discoverNearby = async function(type) {
     try {
         const res = await fetch(queryUrl, {
             method: 'POST',
-            body: queryStr
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: 'data=' + encodeURIComponent(queryStr)
         });
         if (!res.ok) throw new Error('Overpass API error');
         const data = await res.json();
