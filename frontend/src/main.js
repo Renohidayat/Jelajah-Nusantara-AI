@@ -92,6 +92,7 @@ let lastResult = null   // { itineraryText, tripData }
 let leafletMap = null          // Leaflet map instance
 let mapDays = null             // Extracted location data
 let mapExtractAborted = false  // Flag to cancel stale requests
+let discoveryLayerGroup = null // Nearby search markers
 
 // ── BUDGET STATE ───────────────────────────────
 let budgetData = null          // AI budget breakdown data
@@ -1470,6 +1471,7 @@ function getDayColor(dayIndex) {
 function resetMapState() {
     mapDays = null
     mapExtractAborted = false
+    discoveryLayerGroup = null
 
     // Destroy previous Leaflet instance
     if (leafletMap) {
@@ -1480,9 +1482,11 @@ function resetMapState() {
     // Reset UI states
     document.getElementById('route-map')?.classList.add('hidden')
     document.getElementById('map-legend')?.classList.add('hidden')
+    document.getElementById('map-discovery')?.classList.add('hidden')
     document.getElementById('map-loading-state')?.classList.add('hidden')
     document.getElementById('map-error-state')?.classList.add('hidden')
     document.getElementById('map-legend-days').innerHTML = ''
+    document.getElementById('btn-clear-discovery')?.classList.add('hidden')
 }
 
 /** Switch between Itinerary text view and Map view */
@@ -1713,11 +1717,13 @@ async function renderLeafletMap(days) {
 
     const mapContainer = document.getElementById('route-map')
     const legendContainer = document.getElementById('map-legend')
+    const discoveryContainer = document.getElementById('map-discovery')
     const legendDays = document.getElementById('map-legend-days')
 
     // Show map container
     mapContainer.classList.remove('hidden')
     legendContainer.classList.remove('hidden')
+    discoveryContainer?.classList.remove('hidden')
     document.getElementById('map-loading-state').classList.add('hidden')
     document.getElementById('map-error-state').classList.add('hidden')
 
@@ -2051,3 +2057,97 @@ window.filterCommunity = function() {
         grid.appendChild(createTripCard(trip, { showActions: false, delay: i * 0.05 }));
     });
 };
+
+// ══════════════════════════════════════════════════════════════
+//  NEARBY DISCOVERY (Overpass API)
+// ══════════════════════════════════════════════════════════════
+window.discoverNearby = async function(type) {
+    if (!leafletMap) return;
+
+    const bounds = leafletMap.getBounds();
+    const s = bounds.getSouth();
+    const w = bounds.getWest();
+    const n = bounds.getNorth();
+    const e = bounds.getEast();
+
+    let overpassQuery = '';
+    let iconName = '';
+    let color = '';
+
+    if (type === 'hotel') {
+        overpassQuery = `node["tourism"="hotel"](${s},${w},${n},${e});node["tourism"="guest_house"](${s},${w},${n},${e});`;
+        iconName = 'hotel';
+        color = '#3b82f6';
+    } else if (type === 'restaurant') {
+        overpassQuery = `node["amenity"~"restaurant|cafe|fast_food|food_court"](${s},${w},${n},${e});`;
+        iconName = 'restaurant';
+        color = '#f59e0b';
+    } else if (type === 'atm') {
+        overpassQuery = `node["amenity"~"atm|bank"](${s},${w},${n},${e});`;
+        iconName = 'atm';
+        color = '#10b981';
+    } else if (type === 'fuel') {
+        overpassQuery = `node["amenity"="fuel"](${s},${w},${n},${e});`;
+        iconName = 'local_gas_station';
+        color = '#ef4444';
+    }
+
+    if (!overpassQuery) return;
+
+    const queryUrl = `https://overpass-api.de/api/interpreter?data=[out:json][timeout:15];(${overpassQuery});out;`;
+    
+    document.getElementById('discovery-loading').classList.remove('hidden');
+    
+    // Matikan tombol saat loading
+    const btns = document.querySelectorAll('#map-discovery-buttons button');
+    btns.forEach(btn => btn.disabled = true);
+
+    try {
+        const res = await fetch(queryUrl);
+        if (!res.ok) throw new Error('Overpass API error');
+        const data = await res.json();
+        
+        clearDiscovery(); // Hapus markah lama sebelum menampilkan yang baru
+        discoveryLayerGroup = L.layerGroup().addTo(leafletMap);
+
+        const nodes = data.elements.filter(el => el.type === 'node' && el.lat && el.lon);
+        nodes.forEach(el => {
+            const name = el.tags?.name || 'Tidak diketahui';
+            const divIcon = L.divIcon({
+                className: 'custom-map-marker',
+                html: `
+                    <div style="background:${color}; width:28px; height:28px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.3);">
+                        <span class="material-symbols-outlined" style="font-size:16px; color:#fff;">${iconName}</span>
+                    </div>
+                `,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+                popupAnchor: [0, -14]
+            });
+
+            L.marker([el.lat, el.lon], { icon: divIcon })
+                .addTo(discoveryLayerGroup)
+                .bindPopup(DOMPurify.sanitize(`<strong>${name}</strong><br><span style="font-size:12px; color:#666;">Lokasi dari OpenStreetMap</span>`), { className: 'leaflet-popup-custom', maxWidth: 200 });
+        });
+
+        document.getElementById('btn-clear-discovery').classList.remove('hidden');
+        if (nodes.length === 0) {
+            showToast('Tidak ada tempat ditemukan di area yang terlihat di peta.', 'info');
+        } else {
+            showToast(`Menampilkan ${nodes.length} lokasi ${type} di peta.`, 'success');
+        }
+    } catch (err) {
+        showToast('Gagal mencari lokasi sekitar. Silakan coba lagi.', 'error');
+    } finally {
+        document.getElementById('discovery-loading').classList.add('hidden');
+        btns.forEach(btn => btn.disabled = false);
+    }
+}
+
+window.clearDiscovery = function() {
+    if (discoveryLayerGroup && leafletMap) {
+        leafletMap.removeLayer(discoveryLayerGroup);
+        discoveryLayerGroup = null;
+    }
+    document.getElementById('btn-clear-discovery').classList.add('hidden');
+}
