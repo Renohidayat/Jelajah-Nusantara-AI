@@ -1339,6 +1339,55 @@ function buildMarkerIcon(color, label) {
     })
 }
 
+/** Fetch driving route from OSRM Public API between two coordinates */
+async function fetchOsrmRoute(from, to) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`
+        const res = await fetch(url, { signal: AbortSignal.timeout(6000) })
+        if (!res.ok) return null
+        const data = await res.json()
+        if (!data.routes || data.routes.length === 0) return null
+        const route = data.routes[0]
+        return {
+            coords: route.geometry.coordinates.map(c => [c[1], c[0]]), // [lng,lat] → [lat,lng]
+            distanceM: route.legs[0].distance,
+            durationS: route.legs[0].duration,
+        }
+    } catch {
+        return null
+    }
+}
+
+/** Format meters to human-readable distance string */
+function formatDistance(meters) {
+    if (meters < 1000) return `${Math.round(meters)} m`
+    return `${(meters / 1000).toFixed(1)} km`
+}
+
+/** Format seconds to human-readable duration string */
+function formatDuration(seconds) {
+    const mins = Math.round(seconds / 60)
+    if (mins < 60) return `${mins} mnt`
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return m > 0 ? `${h} jam ${m} mnt` : `${h} jam`
+}
+
+/** Build Google Maps Directions URL for a list of waypoints [[lat,lng],...] */
+function buildGoogleMapsUrl(points) {
+    if (points.length === 0) return '#'
+    if (points.length === 1) {
+        return `https://www.google.com/maps/search/?api=1&query=${points[0][0]},${points[0][1]}`
+    }
+    const origin = `${points[0][0]},${points[0][1]}`
+    const destination = `${points[points.length - 1][0]},${points[points.length - 1][1]}`
+    const waypoints = points.slice(1, -1).map(p => `${p[0]},${p[1]}`).join('|')
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
+    if (waypoints) url += `&waypoints=${waypoints}`
+    url += `&travelmode=driving`
+    return url
+}
+
 /** Render the Leaflet map with extracted location data */
 async function renderLeafletMap(days) {
     // Tunggu sampai Leaflet pasti termuat, apapun kondisi jaringan
@@ -1386,7 +1435,7 @@ async function renderLeafletMap(days) {
     const allLatLngs = []
     legendDays.innerHTML = ''
 
-    days.forEach((day, dayIndex) => {
+    for (const [dayIndex, day] of days.entries()) {
         const color = getDayColor(dayIndex)
         const dayLatLngs = []
 
@@ -1399,6 +1448,7 @@ async function renderLeafletMap(days) {
             const markerLabel = `${dayIndex + 1}.${locIndex + 1}`
             const icon = buildMarkerIcon(color, markerLabel, L)
             const timeIcon = TIME_ICONS[loc.time] || 'location_on'
+            const gmapsUrl = buildGoogleMapsUrl([pos])
 
             const popupContent = DOMPurify.sanitize(`
                 <div class="map-popup">
@@ -1407,25 +1457,61 @@ async function renderLeafletMap(days) {
                         <strong class="map-popup-name">${loc.name}</strong>
                     </div>
                     ${loc.description ? `<p class="map-popup-desc">${loc.description}</p>` : ''}
+                    <a class="map-popup-gmaps" href="${gmapsUrl}" target="_blank" rel="noopener noreferrer">Buka di Google Maps</a>
                 </div>`)
 
             L.marker(pos, { icon })
                 .addTo(leafletMap)
-                .bindPopup(popupContent, { maxWidth: 260, className: 'leaflet-popup-custom' })
+                .bindPopup(popupContent, { maxWidth: 280, className: 'leaflet-popup-custom' })
         })
 
-        // ── Draw polyline connecting this day's locations ──
+        // ── Draw OSRM route (or fallback to straight line) per segment ──
         if (dayLatLngs.length > 1) {
-            L.polyline(dayLatLngs, {
-                color,
-                weight: 3,
-                opacity: 0.75,
-                dashArray: '6, 8',
-                lineJoin: 'round',
-            }).addTo(leafletMap)
+            const routePromises = []
+            for (let i = 0; i < dayLatLngs.length - 1; i++) {
+                routePromises.push(
+                    fetchOsrmRoute(dayLatLngs[i], dayLatLngs[i + 1]).then(route => ({ i, route }))
+                )
+            }
+            // Render segments as they resolve (non-blocking)
+            Promise.allSettled(routePromises).then(results => {
+                results.forEach(({ value }) => {
+                    if (!value) return
+                    const { i, route } = value
+                    if (route) {
+                        // Real road route
+                        const pl = L.polyline(route.coords, {
+                            color,
+                            weight: 4,
+                            opacity: 0.85,
+                            lineJoin: 'round',
+                        }).addTo(leafletMap)
+                        // Segment label with distance and time
+                        const midIdx = Math.floor(route.coords.length / 2)
+                        const midPt = route.coords[midIdx] || route.coords[0]
+                        L.marker(midPt, {
+                            icon: L.divIcon({
+                                className: 'map-segment-label',
+                                html: `<span>${formatDistance(route.distanceM)} · ${formatDuration(route.durationS)}</span>`,
+                                iconAnchor: [0, 0],
+                            })
+                        }).addTo(leafletMap)
+                    } else {
+                        // Fallback: straight dashed line
+                        L.polyline([dayLatLngs[i], dayLatLngs[i + 1]], {
+                            color,
+                            weight: 3,
+                            opacity: 0.65,
+                            dashArray: '6, 8',
+                            lineJoin: 'round',
+                        }).addTo(leafletMap)
+                    }
+                })
+            })
         }
 
-        // ── Build legend entry ──
+        // ── Build legend entry with Google Maps multi-stop link ──
+        const gmapsRouteUrl = buildGoogleMapsUrl(dayLatLngs)
         const legendItem = document.createElement('div')
         legendItem.className = 'map-legend-day'
         legendItem.innerHTML = DOMPurify.sanitize(`
@@ -1433,9 +1519,10 @@ async function renderLeafletMap(days) {
             <span class="map-legend-label">
                 <strong>Hari ${day.day}</strong>${day.theme ? ` — ${day.theme}` : ''}
             </span>
-            <span class="map-legend-count">${day.locations.length} lokasi</span>`)
+            <span class="map-legend-count">${day.locations.length} lokasi</span>
+            <a class="map-legend-gmaps" href="${gmapsRouteUrl}" target="_blank" rel="noopener noreferrer">Rute di Maps</a>`)
         legendDays.appendChild(legendItem)
-    })
+    }
 
     // ── Fit map bounds to all markers ──
     if (allLatLngs.length > 0) {
