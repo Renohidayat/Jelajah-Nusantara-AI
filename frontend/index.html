@@ -430,6 +430,19 @@
                             <p id="map-error-msg">Gagal memuat peta.</p>
                             <button class="btn btn-outline" onclick="retryMapExtraction()" style="margin-top:1rem"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>refresh</span> Coba Lagi</button>
                         </div>
+                        <div class="map-discovery hidden" id="map-discovery" style="margin-bottom: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
+                            <h3 class="map-legend-title" style="margin-bottom:0.75rem; font-size: 1rem;"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>travel_explore</span> Temukan di Sekitar</h3>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="map-discovery-buttons">
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" onclick="discoverNearby('hotel')"><span class="material-symbols-outlined" style="font-size: 16px;" aria-hidden="true" translate="no" data-nosnippet>hotel</span> Penginapan</button>
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" onclick="discoverNearby('restaurant')"><span class="material-symbols-outlined" style="font-size: 16px;" aria-hidden="true" translate="no" data-nosnippet>restaurant</span> Restoran</button>
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" onclick="discoverNearby('atm')"><span class="material-symbols-outlined" style="font-size: 16px;" aria-hidden="true" translate="no" data-nosnippet>atm</span> ATM</button>
+                                <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" onclick="discoverNearby('fuel')"><span class="material-symbols-outlined" style="font-size: 16px;" aria-hidden="true" translate="no" data-nosnippet>local_gas_station</span> Pom Bensin</button>
+                                <button class="btn btn-secondary hidden" id="btn-clear-discovery" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;" onclick="clearDiscovery()">Bersihkan</button>
+                            </div>
+                            <div id="discovery-loading" class="hidden" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></div> Mencari...
+                            </div>
+                        </div>
                         <div id="route-map" class="route-map-container hidden"></div>
                         <div class="map-legend hidden" id="map-legend">
                             <h3 class="map-legend-title"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>route</span> Rute Perjalanan</h3>
