@@ -138,9 +138,10 @@ async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
         }
         
         const reader = res.body;
+        const decoder = new TextDecoder("utf-8");
         let buffer = '';
         for await (const chunk of reader) {
-            buffer += chunk.toString('utf-8');
+            buffer += decoder.decode(chunk, { stream: true });
             const lines = buffer.split('\n');
             buffer = lines.pop(); // last incomplete line
             
