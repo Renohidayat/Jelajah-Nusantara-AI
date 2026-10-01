@@ -727,6 +727,79 @@ window.saveItinerary = async function () {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  EXPORT TO CALENDAR
+// ══════════════════════════════════════════════════════════════
+window.exportToCalendar = function () {
+    if (!mapDays || mapDays.length === 0) {
+        showToast('Data lokasi belum siap atau gagal dimuat. Harap tunggu peta selesai dimuat.', 'error');
+        return;
+    }
+
+    const departureDateEl = document.getElementById('departure-date');
+    let startDate = new Date();
+    if (departureDateEl && departureDateEl.value) {
+        startDate = new Date(departureDateEl.value);
+    }
+
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Jelajah Nusantara//ID\nCALSCALE:GREGORIAN\n";
+
+    mapDays.forEach((day, index) => {
+        const eventDate = new Date(startDate);
+        eventDate.setDate(startDate.getDate() + index);
+
+        // Format dates as YYYYMMDD
+        const startStr = eventDate.toISOString().split('T')[0].replace(/-/g, '');
+        const nextDate = new Date(eventDate);
+        nextDate.setDate(eventDate.getDate() + 1);
+        const endStr = nextDate.toISOString().split('T')[0].replace(/-/g, '');
+
+        const destination = lastResult?.tripData?.destination || 'Destinasi';
+        const summary = `Hari ${day.day} — ${destination}: ${day.theme || 'Jelajah'}`;
+        
+        let description = `Itinerary Hari ${day.day}\\n`;
+        if (day.theme) description += `Tema: ${day.theme}\\n\\n`;
+        
+        let locationStr = day.locations.map(l => l.name).join(', ');
+        if (!locationStr) locationStr = destination;
+        
+        day.locations.forEach((loc, idx) => {
+             description += `${idx + 1}. ${loc.name}`;
+             if (loc.time) description += ` (${loc.time})`;
+             description += `\\n`;
+             if (loc.description) description += `${loc.description}\\n`;
+             description += `\\n`;
+        });
+        
+        if (day.locations.length > 0) {
+            const gmapsUrl = buildGoogleMapsUrl(day.locations.map(l => [l.lat, l.lng]));
+            description += `Rute di Google Maps: ${gmapsUrl}\\n`;
+        }
+
+        icsContent += "BEGIN:VEVENT\n";
+        icsContent += `DTSTART;VALUE=DATE:${startStr}\n`;
+        icsContent += `DTEND;VALUE=DATE:${endStr}\n`;
+        icsContent += `SUMMARY:${summary}\n`;
+        icsContent += `DESCRIPTION:${description}\n`;
+        icsContent += `LOCATION:${locationStr}\n`;
+        icsContent += "END:VEVENT\n";
+    });
+
+    icsContent += "END:VCALENDAR";
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Itinerary_${(lastResult?.tripData?.destination || 'Jelajah').replace(/\s+/g, '_')}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('File kalender berhasil diunduh.', 'success');
+}
+
+// ══════════════════════════════════════════════════════════════
 //  SHARE
 // ══════════════════════════════════════════════════════════════
 window.shareItinerary = async function () {
