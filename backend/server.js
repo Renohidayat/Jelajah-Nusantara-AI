@@ -411,7 +411,7 @@ app.post("/api/generate", optionalVerifyToken, aiRateLimiter, async (req, res) =
         const systemPrompt = buildItinerarySystemPromptStream();
         const userPrompt = buildItineraryPrompt({ origin, destination, duration, budget, style });
         
-        await generateContentStream(systemPrompt, userPrompt, (chunk) => {
+        await generateContentStream(systemPrompt, userPrompt, false, null, null, (chunk) => {
             res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
         });
         
