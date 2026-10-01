@@ -33,8 +33,6 @@
     <link rel="manifest" href="/site.webmanifest" />
     <!-- Fonts: Plus Jakarta Sans & Material Symbols -->
         <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -63,12 +61,13 @@
                 <div class="editorial-block">
                     <span class="meta-label">Diperbarui 31 Mei 2026</span>
                     <h2>Pengumpulan Data</h2>
-                    <p>Kami hanya menyimpan data yang benar-benar dibutuhkan, seperti riwayat pencarian destinasi dan preferensi perjalanan, agar itinerary yang dibuat semakin pas buatmu. Datamu aman dan tidak akan kami jual ke pihak ketiga.</p>
+                    <p>Kami hanya menyimpan data yang benar-benar dibutuhkan, seperti riwayat pencarian destinasi dan preferensi perjalanan, agar itinerary yang dibuat semakin pas buatmu. Kami tidak menjual datamu.</p>
                     <h3>Layanan Pihak Ketiga</h3>
                     <p>Aplikasi ini memanggil beberapa layanan eksternal untuk dapat beroperasi penuh:</p>
                     <p><strong>Dari browser kamu (alamat IP terlihat):</strong></p>
                     <ul>
-                        <li><strong>Penyedia Aset & Informasi (OpenStreetMap, Google Fonts, Unsplash, jsDelivr, unpkg, Wikipedia):</strong> Menerima alamat IP kamu saat mengunduh gambar peta, gaya huruf, foto, skrip, dan rangkuman informasi ke komputermu.</li>
+                        <li><strong>Penyedia Aset & Informasi (OpenStreetMap, Google Fonts, Unsplash, jsDelivr, unpkg):</strong> Menerima alamat IP kamu saat mengunduh gambar peta, gaya huruf, foto, dan skrip ke komputermu.</li>
+                        <li><strong>Wikipedia:</strong> Menerima alamat IP dan nama destinasi perjalananmu untuk mengambil foto sampul dan ringkasan lokasi.</li>
                         <li><strong>Penyedia Data Geografis (OSRM, Open-Meteo, Overpass API):</strong> Menerima alamat IP dan koordinat wilayah yang kamu tuju (bukan lokasimu saat ini) untuk menghitung jarak rute, ramalan cuaca, dan tempat menarik di sekitar destinasi.</li>
                     </ul>
                     <p><strong>Lewat server kami:</strong></p>
@@ -76,6 +75,8 @@
                         <li><strong>Firebase (Google):</strong> Mengurus sistem login dan menyimpan nama, foto profil akun Google-mu, beserta data itinerary yang kamu simpan (Firestore).</li>
                         <li><strong>AI melalui OpenAgentic.id:</strong> Teks masukan form kamu (beserta foto destinasi yang kamu unggah, jika menggunakan pencarian pintar) diteruskan melalui OpenAgentic.id, yakni sebuah layanan perantara akses AI, ke penyedia model AI utama di belakangnya. Untuk mengetahui bagaimana mereka memproses datamu, kunjungi <a href="https://openagentic.id/privacy" target="_blank" rel="noopener noreferrer">kebijakan privasi OpenAgentic</a>.</li>
                     </ul>
+                    <h3>Fitur Komunitas (Itinerary Publik)</h3>
+                    <p>Jika kamu memilih untuk mempublikasikan itinerary milikmu (lewat tombol Jadikan Publik), maka <strong>nama, foto profil Google, detail pencarian destinasi, serta isi rute perjalananmu</strong> akan dapat dilihat oleh pengguna lain di halaman Komunitas.</p>
                 </div>
             </section>
             
