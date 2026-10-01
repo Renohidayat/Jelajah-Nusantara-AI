@@ -272,6 +272,8 @@ function updateAuthUI(user) {
     const userInfo = document.getElementById('user-info')
     const userAvatar = document.getElementById('user-avatar')
     const userName = document.getElementById('user-name')
+    const dropdownFullName = document.getElementById('user-dropdown-fullname')
+    const dropdownEmail = document.getElementById('user-dropdown-email')
 
     // Elemen Tambahan: Target UI di dalam Hamburger/Mobile Menu
     const mobileBtnLogin = document.getElementById('mobile-btn-login')
@@ -280,14 +282,17 @@ function updateAuthUI(user) {
     const mobileUserName = document.getElementById('mobile-user-name')
 
     if (user) {
-        // Update UI Desktop (Gunakan opsional chaining/kondisional agar tidak crash jika null)
+        const displayName = user.displayName || user.email?.split('@')[0] || 'Traveler'
+        // Update UI Desktop
         if (btnLogin) btnLogin.classList.add('hidden')
         if (userInfo) userInfo.classList.remove('hidden')
         if (userAvatar) {
             userAvatar.src = user.photoURL || ''
             userAvatar.onerror = () => { userAvatar.style.display = 'none' }
         }
-        if (userName) userName.textContent = user.displayName || user.email || 'Traveler'
+        if (userName) userName.textContent = displayName
+        if (dropdownFullName) dropdownFullName.textContent = user.displayName || 'Traveler'
+        if (dropdownEmail) dropdownEmail.textContent = user.email || ''
 
         // Update UI Mobile Menu
         if (mobileBtnLogin) mobileBtnLogin.classList.add('hidden')
@@ -296,11 +301,15 @@ function updateAuthUI(user) {
             mobileUserAvatar.src = user.photoURL || ''
             mobileUserAvatar.onerror = () => { mobileUserAvatar.style.display = 'none' }
         }
-        if (mobileUserName) mobileUserName.textContent = user.displayName || user.email || 'Traveler'
+        if (mobileUserName) mobileUserName.textContent = displayName
     } else {
         // Update UI Desktop
         if (btnLogin) btnLogin.classList.remove('hidden')
         if (userInfo) userInfo.classList.add('hidden')
+        
+        // Hide dropdown if open
+        const dropdownContainer = document.getElementById('user-info');
+        if (dropdownContainer) dropdownContainer.classList.remove('active');
 
         // Update UI Mobile Menu
         if (mobileBtnLogin) mobileBtnLogin.classList.remove('hidden')
@@ -322,6 +331,26 @@ function initUI() {
             document.querySelectorAll('.chip span').forEach(s => s.style.removeProperty('all'))
         })
     })
+
+    // Logika Dropdown Akun
+    const dropdownBtn = document.getElementById('user-dropdown-btn');
+    const dropdownContainer = document.getElementById('user-info');
+    if (dropdownBtn && dropdownContainer) {
+        dropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownContainer.classList.toggle('active');
+            const isActive = dropdownContainer.classList.contains('active');
+            dropdownBtn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+        });
+        
+        // Tutup dropdown saat klik di luar
+        document.addEventListener('click', (e) => {
+            if (dropdownContainer.classList.contains('active') && !dropdownContainer.contains(e.target)) {
+                dropdownContainer.classList.remove('active');
+                dropdownBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 
     window.addEventListener('hashchange', handleHashChange);
     // Jalankan pertama kali saat load

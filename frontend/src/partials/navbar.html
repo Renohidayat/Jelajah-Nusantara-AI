@@ -16,10 +16,23 @@
                 <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
                     Masuk
                 </button>
-                <div class="user-info hidden" id="user-info">
-                    <img class="user-avatar" id="user-avatar" src="" alt="Avatar" width="32" height="32" />
-                    <span class="user-name" id="user-name"></span>
-                    <button class="btn btn-ghost" onclick="handleLogout()">Keluar</button>
+                <div class="user-dropdown-container hidden" id="user-info">
+                    <button class="user-dropdown-btn" id="user-dropdown-btn" aria-expanded="false">
+                        <img class="user-avatar" id="user-avatar" src="" alt="Avatar" width="36" height="36" />
+                        <span class="user-name" id="user-name"></span>
+                        <span class="material-symbols-outlined user-dropdown-icon">expand_more</span>
+                    </button>
+                    <div class="user-dropdown-menu" id="user-dropdown-menu">
+                        <div class="user-dropdown-header">
+                            <span class="user-dropdown-fullname" id="user-dropdown-fullname"></span>
+                            <span class="user-dropdown-email" id="user-dropdown-email"></span>
+                        </div>
+                        <div class="user-dropdown-divider"></div>
+                        <button class="user-dropdown-item text-danger" onclick="handleLogout()">
+                            <span class="material-symbols-outlined">logout</span>
+                            Keluar
+                        </button>
+                    </div>
                 </div>
             </div>
 
