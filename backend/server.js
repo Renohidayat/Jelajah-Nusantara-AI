@@ -775,14 +775,16 @@ app.use((err, _req, res, _next) => {
 // ─────────────────────────────────────────────
 //  9. START SERVER
 // ─────────────────────────────────────────────
-app.listen(PORT, () => {
-    console.log(`\n🚀 Jelajah Nusantara API running on http://localhost:${PORT}`);
-    console.log(`   ├─ Health  : GET  /`);
-    console.log(`   ├─ Config  : GET  /api/config`);
-    console.log(`   ├─ Generate: POST /api/generate`);
-    console.log(`   ├─ Vision  : POST /api/generate-vision`);
-    console.log(`   └─ Trips   : CRUD /api/itineraries\n`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`\n🚀 Jelajah Nusantara API running on http://localhost:${PORT}`);
+        console.log(`   ├─ Health  : GET  /`);
+        console.log(`   ├─ Config  : GET  /api/config`);
+        console.log(`   ├─ Generate: POST /api/generate`);
+        console.log(`   ├─ Vision  : POST /api/generate-vision`);
+        console.log(`   └─ Trips   : CRUD /api/itineraries\n`);
+    });
+}
 
 // ✅ Wajib untuk deploy Vercel Serverless
 export default app;
