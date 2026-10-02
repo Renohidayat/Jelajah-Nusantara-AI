@@ -5,6 +5,12 @@
 // ════════════════════════════════════════════════════════════════
 
 import { createIcons, Map as LucideMap, Menu, LogOut } from 'lucide'
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+
+window.DOMPurify = DOMPurify;
+window.marked = { parse: marked };
+
 
 // Helper pencegah XSS untuk field teks murni
 const escapeHTML = function(str) {
