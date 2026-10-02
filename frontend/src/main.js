@@ -1185,37 +1185,28 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     card.className = 'trip-card'
     card.style.animationDelay = `${delay}s`
 
-    const dest = trip.tripData?.destination || 'Destinasi'
-    const duration = trip.tripData?.duration || '?'
-    const style = trip.tripData?.style || ''
-    const budget = trip.tripData?.budget || ''
-    const destImage = getDestImage(dest)
-    const preview = trip.itineraryPreview || trip.itineraryText?.substring(0, 280) + '...' || ''
-    const date = formatDate(trip.createdAt)
-    const userName = trip.userName || 'Traveler'
+    const dest = escapeHTML(trip.tripData?.destination || 'Destinasi')
+    const duration = escapeHTML(trip.tripData?.duration || '')
+    const style = escapeHTML((trip.tripData?.style || '').split(' ')[0])
+    const budget = escapeHTML((trip.tripData?.budget || '').split(' ')[0])
+    const destImage = getDestImage(trip.tripData?.destination || 'Destinasi')
+    const previewRaw = trip.itineraryPreview || (trip.itineraryText ? trip.itineraryText.substring(0, 280) + '...' : '')
+    const preview = window.DOMPurify.sanitize(previewRaw.replace(/[#*\`_\[\]]/g, ''), { ALLOWED_TAGS: [] })
+    const date = escapeHTML(formatDate(trip.createdAt))
+    const userName = escapeHTML(trip.userName || 'Traveler')
     const isPublic = trip.isPublic
-    const likes = trip.likes || 0
-
-    let avatarHTML = ''
-    if (trip.userPhoto) {
-        avatarHTML = `<img src="${trip.userPhoto}" alt="${userName}" loading="lazy" width="24" height="24"
-      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-      <div class="trip-author-fallback" style="display:none">${userName[0].toUpperCase()}</div>`
-    } else {
-        avatarHTML = `<div class="trip-author-fallback">${userName[0].toUpperCase()}</div>`
-    }
+    const likes = Number(trip.likes) || 0
+    const tripId = escapeHTML(trip.id)
 
     let actionsHTML = ''
     if (showActions) {
         actionsHTML = `
       <div class="trip-card-actions">
-        <button class="btn-card-action btn-card-toggle"
-          onclick="event.stopPropagation(); togglePublic('${trip.id}', ${!isPublic}, this)">
+        <button class="btn-card-action btn-card-toggle" data-action="togglePublic" data-id="${tripId}" data-is-public="${isPublic}">
           <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
           ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
         </button>
-        <button class="btn-card-action btn-card-delete"
-          onclick="event.stopPropagation(); deleteTrip('${trip.id}', this.closest('.trip-card'))">
+        <button class="btn-card-action btn-card-delete" data-action="deleteTrip" data-id="${tripId}">
           <span class="material-symbols-outlined">delete</span> Hapus
         </button>
       </div>`
@@ -1230,18 +1221,18 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     <div class="trip-card-body">
       <div class="trip-card-meta">
         ${duration ? `<span class="trip-badge"><span class="material-symbols-outlined">calendar_month</span> ${duration} hari</span>` : ''}
-        ${style ? `<span class="trip-badge"><span class="material-symbols-outlined">luggage</span> ${style.split(' ')[0]}</span>` : ''}
-        ${budget ? `<span class="trip-badge"><span class="material-symbols-outlined">payments</span> ${budget.split(' ')[0]}</span>` : ''}
+        ${style ? `<span class="trip-badge"><span class="material-symbols-outlined">luggage</span> ${style}</span>` : ''}
+        ${budget ? `<span class="trip-badge"><span class="material-symbols-outlined">payments</span> ${budget}</span>` : ''}
         ${isPublic ? `<span class="trip-badge trip-badge--public"><span class="material-symbols-outlined">public</span> Publik</span>` : ''}
       </div>
-      <p class="trip-card-preview">${preview.replace(/[#*\`_\[\]]/g, '')}</p>
+      <p class="trip-card-preview">${preview}</p>
       <div class="trip-card-footer">
         <div class="trip-author">
-          ${avatarHTML}
-          <span>${userName} · ${date}</span>
+          <div class="trip-author-fallback">${userName.charAt(0).toUpperCase()}</div>
+          <span>${userName} &middot; ${date}</span>
         </div>
         <div class="trip-stats">
-          <span class="trip-stat" onclick="event.stopPropagation(); likeTrip('${trip.id}', this)">
+          <span class="trip-stat" data-action="likeTrip" data-id="${tripId}">
             <span class="material-symbols-outlined">favorite</span> <span>${likes}</span>
           </span>
         </div>
@@ -1249,7 +1240,25 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
       ${actionsHTML}
     </div>`
 
-    card.addEventListener('click', () => openTripModal(trip))
+    // Safely assign userPhoto via DOM property if it's HTTPS
+    if (trip.userPhoto && trip.userPhoto.startsWith('https://')) {
+        const authorDiv = card.querySelector('.trip-author');
+        const fallback = authorDiv.querySelector('.trip-author-fallback');
+        const img = document.createElement('img');
+        img.src = trip.userPhoto;
+        img.alt = userName;
+        img.loading = 'lazy';
+        img.width = 24;
+        img.height = 24;
+        img.onerror = function() { this.style.display='none'; fallback.style.display='flex'; };
+        fallback.style.display = 'none';
+        authorDiv.insertBefore(img, fallback);
+    }
+
+    card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-card-action') || e.target.closest('.trip-stat')) return;
+        openTripModal(trip)
+    })
     return card
 }
 
