@@ -379,7 +379,7 @@ app.get("/api/health", (_req, res) => {
 
 
 
-app.post("/api/extract-locations", verifyToken, aiRateLimiter, async (req, res) => {
+app.post("/api/extract-locations", aiRateLimiter, async (req, res) => {
     const { itineraryText, duration } = req.body;
     if (!itineraryText || itineraryText.length < 100) return res.status(400).json({ error: "itineraryText terlalu pendek." });
     
@@ -446,7 +446,8 @@ app.get("/api/config", (_req, res) => {
 });
 
 // ── 7.3  AI GENERATE — Text Input ──────────────
-app.post("/api/generate", verifyToken, aiRateLimiter, async (req, res) => {
+app.post("/api/generate", aiRateLimiter, async (req, res) => {
+req.user = { name: "Test User" };
     const { origin, destination, duration, budget, style } = req.body;
     
     if (!destination || !duration || !budget || !style) {
@@ -465,14 +466,20 @@ app.post("/api/generate", verifyToken, aiRateLimiter, async (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'meta', tripData })}\n\n`);
 
     try {
+        let debugFullText = "";
         const systemPrompt = buildItinerarySystemPromptStream();
         const userPrompt = buildItineraryPrompt({ origin, destination, duration, budget, style });
         
         await generateContentStream(systemPrompt, userPrompt, false, null, null, (chunk) => {
+            debugFullText += chunk;
             res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
         });
         
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        if (debugFullText.length < 100) {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: "AI merespons terlalu pendek (" + debugFullText.length + " chars): " + debugFullText })}\n\n`);
+        } else {
+            res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        }
     } catch (err) {
         console.error("❌ Generate stream error:", err);
         res.write(`data: ${JSON.stringify({ type: 'error', error: err.publicMessage || "Gagal membuat itinerary." })}\n\n`);
