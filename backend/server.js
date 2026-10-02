@@ -5,7 +5,7 @@
 // ============================================================
 
 import express from "express";
-import cors from "cors";
+import cors from "cors";\nimport helmet from "helmet";
 import multer from "multer";
 import dotenv from "dotenv";
 import path from "path";
@@ -518,7 +518,7 @@ app.get("/api/itineraries/my", verifyToken, async (req, res) => {
 });
 
 // ── 7.7  GET PUBLIC / COMMUNITY ITINERARIES ────
-app.get("/api/itineraries/public", async (req, res) => {
+app.get("/api/itineraries/public", apiRateLimiter, async (req, res) => {
     try {
         const limit = Math.min(parseInt(req.query.limit) || 20, 50);
         const snapshot = await db
@@ -554,7 +554,7 @@ app.get("/api/itineraries/public", async (req, res) => {
 });
 
 // ── 7.8  GET SINGLE ITINERARY BY ID ───────────
-app.get("/api/itineraries/:id", async (req, res) => {
+app.get("/api/itineraries/:id", apiRateLimiter, async (req, res) => {
     try {
         const doc = await db.collection("itineraries").doc(req.params.id).get();
 
