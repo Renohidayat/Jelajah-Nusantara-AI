@@ -1196,7 +1196,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
 
     let avatarHTML = ''
     if (trip.userPhoto) {
-        avatarHTML = `<img src="${trip.userPhoto}" alt="${userName}" loading="lazy"
+        avatarHTML = `<img src="${trip.userPhoto}" alt="${userName}" loading="lazy" width="24" height="24"
       onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
       <div class="trip-author-fallback" style="display:none">${userName[0].toUpperCase()}</div>`
     } else {
@@ -1221,7 +1221,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
 
     card.innerHTML = `
     <div class="trip-card-cover">
-      <img src="${destImage}" data-wiki-dest="${dest}" alt="${dest}" loading="lazy" />
+      <img src="${destImage}" data-wiki-dest="${dest}" alt="${dest}" loading="lazy" width="400" height="250" />
       <div class="trip-card-cover-overlay"></div>
       <div class="trip-card-dest">${dest}</div>
     </div>
