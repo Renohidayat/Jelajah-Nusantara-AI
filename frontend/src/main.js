@@ -58,13 +58,6 @@ window.fetchWikiImages = async function() {
     }
 }
 
-// Configure DOMPurify for external links
-DOMPurify.addHook('afterSanitizeAttributes', function(node) {
-    if (node.nodeName && node.nodeName.toLowerCase() === 'a') {
-        node.setAttribute('target', '_blank');
-        node.setAttribute('rel', 'noopener noreferrer');
-    }
-});
 import { initializeApp } from 'firebase/app'
 import {
     getAuth,
