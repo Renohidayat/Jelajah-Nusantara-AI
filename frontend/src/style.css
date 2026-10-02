@@ -3395,3 +3395,16 @@ body.modal-open {
     background-color: #fee2e2;
 }
 
+
+.hero-attribution {
+  position: absolute;
+  bottom: 120px;
+  right: 16px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+}
+.hero-attribution a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
