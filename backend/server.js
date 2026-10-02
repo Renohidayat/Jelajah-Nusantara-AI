@@ -102,6 +102,25 @@ if (process.env.TRUST_PROXY === 'true') {
     app.set('trust proxy', 1);
 }
 
+
+app.use(
+    helmet({
+        crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+        referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+        contentSecurityPolicy: {
+            reportOnly: true,
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://fonts.googleapis.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                imgSrc: ["'self'", "data:", "https://images.unsplash.com", "https://lh3.googleusercontent.com"],
+                connectSrc: ["'self'", "https://firebasestorage.googleapis.com", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com"]
+            }
+        }
+    })
+);
+
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
