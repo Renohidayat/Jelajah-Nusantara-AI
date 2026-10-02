@@ -99,57 +99,53 @@ async function doFetchCompletion(modelName, messages, config) {
             body: JSON.stringify(payload),
             signal: controller.signal
         });
-        const duration = Date.now() - start;
-        const data = await res.json().catch(() => null);
+        const decoder = new TextDecoder("utf-8");
+        let buffer = '';
+        let fullRawText = '';
+        let chunkCount = 0;
         
-        if (!res.ok) {
-            const errCode = res.status;
-            const msg = data?.error?.message || "Unknown error";
-            console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
-            throw { status: errCode, message: msg };
+        for await (const chunk of reader) {
+            const textChunk = decoder.decode(chunk, { stream: true });
+            buffer += textChunk;
+            fullRawText += textChunk;
+            
+            const lines = buffer.split('\n');
+            buffer = lines.pop(); // last incomplete line
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('data: ')) {
+                    const dataStr = trimmed.substring(6);
+                    if (dataStr === '[DONE]') continue;
+                    try {
+                        const data = JSON.parse(dataStr);
+                        const content = data.choices?.[0]?.delta?.content;
+                        if (content) {
+                            onChunk(content);
+                            chunkCount++;
+                        }
+                    } catch (e) {
+                        // ignore parse error for incomplete json chunks
+                    }
+                }
+            }
         }
         
-        const content = data?.choices?.[0]?.message?.content;
-        const usage = data?.usage?.total_tokens || 0;
-        const reqId = data?.id || "unknown";
-        
-        console.log(`✅ AI Success [${modelName}] (ReqID: ${reqId}, Duration: ${duration}ms, Tokens: ${usage})`);
-        return content;
-    } finally {
-        clearTimeout(id);
-    }
-}
-
-async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), config.timeoutMs);
-    const start = Date.now();
-    try {
-        const payload = {
-            model: modelName,
-            messages,
-            stream: true
-        };
-        const res = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${config.apiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        
-        if (!res.ok) {
-            const duration = Date.now() - start;
-            const data = await res.json().catch(() => null);
-            const errCode = res.status;
-            const msg = data?.error?.message || "Unknown error";
-            console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
-            throw { status: errCode, message: msg };
+        // Handle case where OpenAgentic ignores stream: true and returns plain JSON
+        if (chunkCount === 0) {
+            try {
+                const data = JSON.parse(fullRawText.trim());
+                const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.delta?.content;
+                if (content) {
+                    onChunk(content);
+                } else if (data.error) {
+                    throw { status: 500, message: data.error.message || "OpenAgentic API Error" };
+                }
+            } catch (e) {
+                // If parsing fails, and it's completely empty, throw error
+                if (!fullRawText.trim()) throw { status: 500, message: "Response AI kosong dari OpenAgentic" };
+            }
         }
-        
-        const reader = res.body;
         const decoder = new TextDecoder("utf-8");
         let buffer = '';
         for await (const chunk of reader) {
