@@ -82,8 +82,8 @@ app.use(
                 return callback(null, true);
             }
             
-            // Allow any Vercel preview or production deployments automatically
-            if (origin.endsWith('.vercel.app')) {
+            // Allow specific project deployments (production and preview)
+            if (/^https:\/\/jelajah-nusantara-ai(?:-[\w-]+)?\.vercel\.app$/.test(origin)) {
                 return callback(null, true);
             }
             
