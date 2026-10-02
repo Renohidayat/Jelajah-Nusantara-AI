@@ -178,7 +178,7 @@ async function boot() {
         }
 
     } catch (err) {
-        console.error('Boot error:', err)
+        console.warn('Boot warning (bisa diabaikan jika server sedang cold-start):', err)
         showToast('Gagal terhubung ke server. Coba refresh halaman.', 'error')
     }
 }
