@@ -187,14 +187,13 @@
 
 /* 6. SKELETON LOADER */
 .skeleton {
-    background: linear-gradient(90deg, var(--surface-hover) 25%, var(--border-soft) 50%, var(--surface-hover) 75%);
-    background-size: 200% 100%;
+    background: var(--surface-hover);
     animation: skeleton-loading 1.5s infinite ease-in-out;
     border-radius: var(--radius-sm);
 }
 @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 .skeleton-text {
     height: 16px;
