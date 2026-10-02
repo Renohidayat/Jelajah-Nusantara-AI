@@ -1,3 +1,4 @@
+@import url('./ui.css');
 @import "@fontsource/plus-jakarta-sans/400.css";
 @import "@fontsource/plus-jakarta-sans/500.css";
 @import "@fontsource/plus-jakarta-sans/600.css";
@@ -27,7 +28,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-@import url('./ui.css');
 /* ═══════════════════════════════════════════════════════════════
    JELAJAH NUSANTARA — Design System v2
    Clean, professional, zero-emoji, token-driven
