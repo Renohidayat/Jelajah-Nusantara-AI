@@ -22,28 +22,46 @@ dotenv.config();
 
 // ─────────────────────────────────────────────
 //  1. FIREBASE ADMIN INITIALIZATION
-//     CRITICAL: Replace \\n → \n in private key
 // ─────────────────────────────────────────────
-const serviceAccount = {
-    type: "service_account",
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    // ✅ CRITICAL BUG FIX: Parse escaped newlines from .env
-    private_key: process.env.FIREBASE_PRIVATE_KEY
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
-        : undefined,
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL };
-
-let adminApp;
-let db;
-let adminAuth;
+let adminApp = null;
+let db = null;
+let adminAuth = null;
 
 try {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    const missingEnvs = [];
+    if (!projectId) missingEnvs.push("FIREBASE_PROJECT_ID");
+    if (!clientEmail) missingEnvs.push("FIREBASE_CLIENT_EMAIL");
+    if (!privateKey) missingEnvs.push("FIREBASE_PRIVATE_KEY");
+
+    if (missingEnvs.length > 0) {
+        throw new Error(`Environment variables hilang: ${missingEnvs.join(', ')}`);
+    }
+
+    // Clean up private key (remove surrounding quotes if any, replace escaped newlines)
+    privateKey = privateKey.replace(/\\n/g, '\n').replace(/^["']|["']$/g, '');
+
+    // Validate key format
+    if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+        throw new Error("Format FIREBASE_PRIVATE_KEY tidak valid (tidak mengandung BEGIN PRIVATE KEY)");
+    }
+
+    const serviceAccount = {
+        type: "service_account",
+        project_id: projectId,
+        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+        private_key: privateKey,
+        client_email: clientEmail,
+        client_id: process.env.FIREBASE_CLIENT_ID,
+        auth_uri: "https://accounts.google.com/o/oauth2/auth",
+        token_uri: "https://oauth2.googleapis.com/token",
+        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+        client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
+    };
+
     adminApp = initializeApp({ credential: cert(serviceAccount) });
     db = getFirestore(adminApp);
     adminAuth = getAuth(adminApp);
@@ -51,6 +69,7 @@ try {
 } catch (err) {
     console.error("❌ Firebase Admin initialization failed:", err.message);
     // Don't process.exit on serverless environments to avoid generic 500 errors
+    // Instead, leave db and adminAuth as null so the app still boots for /api/health
 }
 
 // OpenAgentic AI Initialization is handled in backend/ai/openagentic.js
