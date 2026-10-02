@@ -2326,7 +2326,8 @@ window.clearDiscovery = function() {
     }
     document.getElementById('btn-clear-discovery').classList.add('hidden');
 }
-\n
+
+
 // ══════════════════════════════════════════════════════════════
 //  CSP EVENT DELEGATION
 // ══════════════════════════════════════════════════════════════
@@ -2360,6 +2361,12 @@ document.addEventListener('click', (e) => {
     else if (action === 'closeModal') window.closeModal();
     else if (action === 'authAction') window.authAction();
     else if (action === 'triggerFileInput') document.getElementById('file-input').click();
+    else if (action === 'togglePublic') { e.stopPropagation(); window.togglePublic(args, el.getAttribute('data-ispublic') === 'true', el); }
+    else if (action === 'deleteTrip') { e.stopPropagation(); window.deleteTrip(args, el.closest('.trip-card')); }
+    else if (action === 'deleteTripModal') { window.deleteTrip(args, null); window.closeModal(); }
+    else if (action === 'likeTrip') { e.stopPropagation(); window.likeTrip(args, el); }
+    else if (action === 'executeLogin') { window.executeLogin(); }
+    else if (action === 'executeLogout') { window.executeLogout(); }
 });
 
 document.addEventListener('input', (e) => {
