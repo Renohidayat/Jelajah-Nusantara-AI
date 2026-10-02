@@ -7,8 +7,8 @@
 /* ── 1. DESIGN TOKENS ──────────────────────────────────────── */
 :root {
     /* Brand: Terracotta (Nusantara Theme) */
-    --primary: #d95e39;
-    --primary-hover: #be4d2b;
+    --primary: #a93d1e;
+    --primary-hover: #8a2f15;
     --primary-light: #fef1ed;
     --primary-disabled: #f7bfae;
 
@@ -25,7 +25,7 @@
     --on-primary: #ffffff;
 
     /* Semantic */
-    --success: #16a34a;
+    --success: #166534;
     --success-light: #f0fdf4;
     --success-border: #bbf7d0;
     --error: #dc2626;
