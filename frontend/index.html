@@ -539,7 +539,7 @@
                         <span class="material-symbols-outlined auth-gate-icon-sym">lock</span>
                         <h3>Masuk untuk melihat perjalananmu</h3>
                         <p>Login dengan Google untuk menyimpan dan mengakses itinerary-mu kapan saja.</p>
-                        <button class="btn btn-primary" onclick="handleLogin()">Masuk dengan Google</button>
+                        <button class="btn btn-primary" data-action="handleLogin">Masuk dengan Google</button>
                     </div>
                 </div>
 
@@ -555,10 +555,10 @@
                 <div class="trips-controls" id="mytrips-controls" style="display:none;">
                     <div class="search-box">
                         <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>search</span>
-                        <input type="text" id="mytrips-search" class="input" placeholder="Cari destinasi atau catatan..." oninput="filterMyTrips()" />
+                        <input type="text" id="mytrips-search" class="input" placeholder="Cari destinasi atau catatan..." data-input="filterMyTrips" />
                     </div>
                     <div class="sort-box">
-                        <select id="mytrips-sort" class="input" onchange="filterMyTrips()">
+                        <select id="mytrips-sort" class="input" data-change="filterMyTrips">
                             <option value="newest">Terbaru</option>
                             <option value="oldest">Terlama</option>
                         </select>
@@ -571,7 +571,7 @@
                     <span class="material-symbols-outlined empty-icon-sym">map</span>
                     <h3>Belum ada perjalanan tersimpan</h3>
                     <p>Buat itinerary pertamamu sekarang!</p>
-                    <button class="btn btn-primary" onclick="showTab('planner')">Mulai Rencanakan</button>
+                    <button class="btn btn-primary" data-action="showTab" data-args="planner">Mulai Rencanakan</button>
                 </div>
             </div>
         </section>
@@ -599,10 +599,10 @@
                 <div class="trips-controls" id="community-controls" style="display:none;">
                     <div class="search-box">
                         <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>search</span>
-                        <input type="text" id="community-search" class="input" placeholder="Cari destinasi atau cerita..." oninput="filterCommunity()" />
+                        <input type="text" id="community-search" class="input" placeholder="Cari destinasi atau cerita..." data-input="filterCommunity" />
                     </div>
                     <div class="sort-box">
-                        <select id="community-sort" class="input" onchange="filterCommunity()">
+                        <select id="community-sort" class="input" data-change="filterCommunity">
                             <option value="newest">Terbaru</option>
                             <option value="popular">Terpopuler</option>
                         </select>
@@ -622,9 +622,9 @@
     </main>
 
     <!-- ══ MODALS ══════════════════════════════════════════ -->
-    <div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal()">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <button class="modal-close" onclick="closeModal()" aria-label="Tutup modal">
+    <div class="modal-overlay hidden" id="modal-overlay" data-action="closeModal">
+        <div class="modal-box" data-action="stopPropagation">
+            <button class="modal-close" data-action="closeModal" aria-label="Tutup modal">
                 <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span>
             </button>
             <div class="modal-body" id="modal-body"></div>
