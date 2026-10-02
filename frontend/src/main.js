@@ -525,8 +525,13 @@ window.generateItinerary = async function () {
 
     try {
         const token = await getAuthToken()
-        const headers = { 'Content-Type': 'application/json' }
-        if (token) headers['Authorization'] = `Bearer ${token}`
+        if (!token) {
+            showToast('Harap login dengan akun Google terlebih dahulu untuk merencanakan perjalanan.', 'warning');
+            setGenerateLoading('text', false);
+            isGenerating = false;
+            return;
+        }
+        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
 
         const resp = await fetch(`${API_BASE}/api/generate`, {
             method: 'POST',
@@ -646,8 +651,12 @@ window.generateVision = async function () {
         if (hint) formData.append('destination', hint)
 
         const token = await getAuthToken()
-        const headers = {}
-        if (token) headers['Authorization'] = `Bearer ${token}`
+        if (!token) {
+            showToast('Harap login dengan akun Google terlebih dahulu untuk mendeteksi foto.', 'warning');
+            setGenerateLoading('vision', false);
+            return;
+        }
+        const headers = { 'Authorization': `Bearer ${token}` }
 
         const resp = await fetch(`${API_BASE}/api/generate-vision`, {
             method: 'POST',
