@@ -8,7 +8,8 @@ import { createIcons, Map as LucideMap, Menu, LogOut } from 'lucide'
 
 // Helper pencegah XSS untuk field teks murni
 const escapeHTML = function(str) {
-    if (typeof str !== 'string') return '';
+    if (str === null || str === undefined) return '';
+    str = String(str);
     return str
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
