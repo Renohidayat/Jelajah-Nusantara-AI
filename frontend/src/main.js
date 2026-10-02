@@ -2131,6 +2131,44 @@ async function renderBudgetChart(data) {
 
 
 
+window.likeTrip = async function(id, btnElement) {
+    if (!currentUser) {
+        showToast('Silakan masuk terlebih dahulu untuk menyukai.', 'warning');
+        return;
+    }
+    btnElement.disabled = true;
+    try {
+        const token = await getAuthToken();
+        const res = await fetch(`${API_BASE}/api/itineraries/${id}/like`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            btnElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:14px">${data.isLiked ? 'favorite' : 'favorite_border'}</span> <span class="like-count">${data.likes}</span>`;
+            
+            if (data.isLiked) {
+                btnElement.classList.add('liked');
+            } else {
+                btnElement.classList.remove('liked');
+            }
+            showToast(data.message, 'success');
+            
+            const commTrip = communityTripsCache.find(t => t.id === id);
+            if (commTrip) commTrip.likes = data.likes;
+            const myTrip = myTripsCache.find(t => t.id === id);
+            if (myTrip) myTrip.likes = data.likes;
+            
+        } else {
+            throw new Error('Gagal menyukai');
+        }
+    } catch (err) {
+        showToast('Gagal menyukai. Silakan coba lagi.', 'error');
+    } finally {
+        btnElement.disabled = false;
+    }
+}
+
 window.filterMyTrips = function() {
     const term = document.getElementById('mytrips-search').value.toLowerCase();
     const sort = document.getElementById('mytrips-sort').value;
