@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jelajah Nusantara AI — Perencana Itinerary Wisata Indonesia</title>
+    <link rel="preload" as="image" imagesrcset="/images/hero-640.webp 640w, /images/hero-960.webp 960w, /images/hero-1600.webp 1600w" imagesizes="(max-width: 640px) 100vw, (max-width: 960px) 100vw, 100vw" fetchpriority="high">
     <meta name="description" content="Susun itinerary perjalanan ke seluruh Indonesia dalam hitungan detik. Pilih destinasi, atur anggaran, dan dapatkan rencana wisata personal dari AI." />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#D95E39" />
@@ -36,8 +37,10 @@
         <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=account_balance,account_balance_wallet,atm,auto_awesome,backpack,bar_chart,beach_access,bolt,bookmark,calendar_add_on,calendar_month,calendar_today,call,check_circle,close,dark_mode,delete,description,eco,edit_note,explore,family_restroom,favorite,flight,flight_land,flight_takeoff,hiking,hotel,hourglass_top,landscape,local_gas_station,location_city,location_on,lock,logout,luggage,mail,map,payments,pets,photo_camera,pool,public,refresh,restaurant,route,sailing,scuba_diving,search,share,spa,star,temple_hindu,terrain,theater_comedy,travel_explore,visibility,warning,water,wb_sunny,wb_twilight&display=swap" rel="stylesheet" />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" /></noscript>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=account_balance,account_balance_wallet,atm,auto_awesome,backpack,bar_chart,beach_access,bolt,bookmark,calendar_add_on,calendar_month,calendar_today,call,check_circle,close,dark_mode,delete,description,eco,edit_note,explore,family_restroom,favorite,flight,flight_land,flight_takeoff,hiking,hotel,hourglass_top,landscape,local_gas_station,location_city,location_on,lock,logout,luggage,mail,map,payments,pets,photo_camera,pool,public,refresh,restaurant,route,sailing,scuba_diving,search,share,spa,star,temple_hindu,terrain,theater_comedy,travel_explore,visibility,warning,water,wb_sunny,wb_twilight&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=account_balance,account_balance_wallet,atm,auto_awesome,backpack,bar_chart,beach_access,bolt,bookmark,calendar_add_on,calendar_month,calendar_today,call,check_circle,close,dark_mode,delete,description,eco,edit_note,explore,family_restroom,favorite,flight,flight_land,flight_takeoff,hiking,hotel,hourglass_top,landscape,local_gas_station,location_city,location_on,lock,logout,luggage,mail,map,payments,pets,photo_camera,pool,public,refresh,restaurant,route,sailing,scuba_diving,search,share,spa,star,temple_hindu,terrain,theater_comedy,travel_explore,visibility,warning,water,wb_sunny,wb_twilight&display=swap" /></noscript>
 
     <link rel="stylesheet" href="/src/style.css" />
     <!-- Leaflet.js -->
@@ -81,11 +84,10 @@
             <!-- Hero -->
             <div class="hero">
                 <img class="hero-img" fetchpriority="high" 
-                    src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&q=70&w=1600"
-                    srcset="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&q=70&w=640 640w,
-                            https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&q=70&w=960 960w,
-                            https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&q=70&w=1280 1280w,
-                            https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&q=70&w=1600 1600w"
+                    src="/images/hero-1600.webp"
+                    srcset="/images/hero-640.webp 640w,
+                            /images/hero-960.webp 960w,
+                            /images/hero-1600.webp 1600w"
                     sizes="(max-width: 640px) 100vw, (max-width: 960px) 100vw, 100vw"
                     alt="Pemandangan alam Indonesia" width="1600" height="900" />
                 <div class="hero-overlay"></div>
