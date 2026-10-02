@@ -103,19 +103,18 @@ async function doFetchCompletion(modelName, messages, config) {
         let buffer = '';
         let fullRawText = '';
         let chunkCount = 0;
-        
         for await (const chunk of reader) {
-            const textChunk = decoder.decode(chunk, { stream: true });
-            buffer += textChunk;
-            fullRawText += textChunk;
-            
+            const strChunk = decoder.decode(chunk, { stream: true });
+            buffer += strChunk;
+            fullRawText += strChunk;
             const lines = buffer.split('\n');
             buffer = lines.pop(); // last incomplete line
             
             for (const line of lines) {
                 const trimmed = line.trim();
-                if (trimmed.startsWith('data: ')) {
-                    const dataStr = trimmed.substring(6);
+                // Handle "data:" or "data: "
+                if (trimmed.startsWith('data:')) {
+                    const dataStr = trimmed.startsWith('data: ') ? trimmed.substring(6) : trimmed.substring(5);
                     if (dataStr === '[DONE]') continue;
                     try {
                         const data = JSON.parse(dataStr);
@@ -125,47 +124,35 @@ async function doFetchCompletion(modelName, messages, config) {
                             chunkCount++;
                         }
                     } catch (e) {
-                        // ignore parse error for incomplete json chunks
+                        // ignore parse error
                     }
                 }
             }
         }
         
-        // Handle case where OpenAgentic ignores stream: true and returns plain JSON
         if (chunkCount === 0) {
+            // Probably OpenAgentic ignored stream:true or failed silently
             try {
+                // If it's plain json
                 const data = JSON.parse(fullRawText.trim());
-                const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.delta?.content;
+                const content = data.choices?.[0]?.message?.content || 
+                                data.choices?.[0]?.delta?.content ||
+                                data.response ||
+                                data.reply ||
+                                data.text ||
+                                data.output?.text;
+                                
                 if (content) {
                     onChunk(content);
                 } else if (data.error) {
                     throw { status: 500, message: data.error.message || "OpenAgentic API Error" };
+                } else {
+                    throw { status: 500, message: "Format respons tidak dikenali: " + fullRawText.substring(0, 100) };
                 }
-            } catch (e) {
-                // If parsing fails, and it's completely empty, throw error
+            } catch(e) {
+                if (e.status === 500) throw e;
                 if (!fullRawText.trim()) throw { status: 500, message: "Response AI kosong dari OpenAgentic" };
-            }
-        }
-        const decoder = new TextDecoder("utf-8");
-        let buffer = '';
-        for await (const chunk of reader) {
-            buffer += decoder.decode(chunk, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop(); // last incomplete line
-            
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('data: ')) {
-                    const dataStr = trimmed.substring(6);
-                    if (dataStr === '[DONE]') continue;
-                    try {
-                        const data = JSON.parse(dataStr);
-                        const content = data.choices?.[0]?.delta?.content;
-                        if (content) onChunk(content);
-                    } catch (e) {
-                        // ignore parse error for incomplete json chunks
-                    }
-                }
+                throw { status: 500, message: "Gagal memproses respon OpenAgentic: " + fullRawText.substring(0, 50) };
             }
         }
         
