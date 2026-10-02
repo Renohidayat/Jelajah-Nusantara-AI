@@ -16,7 +16,7 @@
     --ink: #1c1917; /* Almost black */
     --body: #44403c;
     --muted: #78716c;
-    --muted-soft: #a8a29e;
+    --muted-soft: #706a65;
     --border: #d6d3d1;
     --border-soft: #e7e5e4;
     --border-strong: #a8a29e;
@@ -31,7 +31,7 @@
     --error: #dc2626;
     --error-light: #fef2f2;
     --error-border: #fecaca;
-    --warning: #d97706;
+    --warning: #9c5506;
     --warning-light: #fffbeb;
     --warning-border: #fde68a;
     --info: #2563eb;
