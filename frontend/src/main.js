@@ -101,24 +101,24 @@ let budgetChartInstance = null // Chart.js instance to avoid memory leaks / redr
 // ── LEAFLET LOADER ─────────────────────────────
 // Garantikan window.L tersedia sebelum render peta, tanpa peduli kecepatan CDN
 let _leafletLoadPromise = null
-function loadLeaflet() {
-    if (_leafletLoadPromise) return _leafletLoadPromise
-    _leafletLoadPromise = new Promise((resolve, reject) => {
-        if (window.L) return resolve(window.L)          // Sudah dimuat oleh HTML <script>
-
-        // Belum ada — load secara dinamis
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        document.head.appendChild(link)
-
-        const script = document.createElement('script')
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-        script.onload = () => resolve(window.L)
-        script.onerror = () => reject(new Error('Gagal memuat Leaflet.js dari CDN.'))
-        document.body.appendChild(script)
-    })
-    return _leafletLoadPromise
+async function loadLeaflet() {
+    if (_leafletLoadPromise) return _leafletLoadPromise;
+    _leafletLoadPromise = (async () => {
+        if (window.L) return window.L;
+        const L = (await import('leaflet')).default;
+        await import('leaflet/dist/leaflet.css');
+        
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: (await import('leaflet/dist/images/marker-icon-2x.png')).default,
+            iconUrl: (await import('leaflet/dist/images/marker-icon.png')).default,
+            shadowUrl: (await import('leaflet/dist/images/marker-shadow.png')).default,
+        });
+        
+        window.L = L;
+        return L;
+    })();
+    return _leafletLoadPromise;
 }
 
 // Markdown renderer config
@@ -1973,10 +1973,16 @@ function formatRupiah(amount) {
 }
 
 /** Render a premium budget Doughnut chart using Chart.js */
-function renderBudgetChart(data) {
+async function renderBudgetChart(data) {
     if (!window.Chart) {
-        console.warn('Chart.js is not loaded yet.')
-        return
+        try {
+            const { Chart, registerables } = await import('chart.js');
+            Chart.register(...registerables);
+            window.Chart = Chart;
+        } catch (err) {
+            console.warn('Chart.js gagal dimuat: ', err);
+            return;
+        }
     }
 
     const canvas = document.getElementById('budget-chart')
