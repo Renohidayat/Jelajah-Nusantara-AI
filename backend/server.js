@@ -83,8 +83,8 @@ app.use(
                 return callback(null, true);
             }
             
-            // Allow specific project deployments (production and preview)
-            if (/^https:\/\/jelajah-nusantara-ai(?:-[\w-]+)?\.vercel\.app$/.test(origin)) {
+            // Allow exact production domain
+            if (origin === 'https://jelajah-nusantara-ai.vercel.app') {
                 return callback(null, true);
             }
             
