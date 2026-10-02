@@ -584,6 +584,7 @@ window.generateItinerary = async function () {
         let budgetJsonStr = ''
         let tripData = null
 
+        let streamFinishedGracefully = false;
         while (true) {
             const { value, done } = await reader.read()
             if (done) break

@@ -9,7 +9,7 @@ export const aiConfig = {
     baseUrl: isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai" : (process.env.OPENAGENTIC_BASE_URL || "https://openagentic.id/api/v1"),
     model: isGemini ? "gemini-2.5-flash" : (process.env.AI_MODEL || "deepseek-v4.1-flash-free"),
     fallbackModels: (process.env.AI_FALLBACK_MODELS || "big-pickle,mimo-v2.6-flash,muse-spark-1.3-free,space-bunny-free").split(",").map(m => m.trim()).filter(Boolean),
-    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "60000", 10),
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "55000", 10),
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || "2", 10),
     visionEnabled: process.env.AI_VISION_ENABLED !== "false",
     visionModel: isGemini ? "gemini-2.5-flash" : (process.env.AI_VISION_MODEL || process.env.AI_MODEL || "deepseek-v4.1-flash-free"),
