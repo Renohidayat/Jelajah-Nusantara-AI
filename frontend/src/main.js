@@ -2326,3 +2326,81 @@ window.clearDiscovery = function() {
     }
     document.getElementById('btn-clear-discovery').classList.add('hidden');
 }
+\n
+// ══════════════════════════════════════════════════════════════
+//  CSP EVENT DELEGATION
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-action');
+    const args = el.getAttribute('data-args');
+    
+    if (action === 'stopPropagation') {
+        e.stopPropagation();
+        return;
+    }
+    
+    if (action === 'switchMode') window.switchMode(args);
+    else if (action === 'generateItinerary') window.generateItinerary();
+    else if (action === 'generateVision') window.generateVision();
+    else if (action === 'dismissError') window.dismissError();
+    else if (action === 'exportToCalendar') window.exportToCalendar();
+    else if (action === 'shareItinerary') window.shareItinerary();
+    else if (action === 'saveItinerary') window.saveItinerary();
+    else if (action === 'switchResultView') window.switchResultView(args);
+    else if (action === 'retryMapExtraction') window.retryMapExtraction();
+    else if (action === 'discoverNearby') window.discoverNearby(args);
+    else if (action === 'clearDiscovery') window.clearDiscovery();
+    else if (action === 'regenerate') window.regenerate();
+    else if (action === 'handleLogin') window.handleLogin();
+    else if (action === 'handleLogout') window.handleLogout();
+    else if (action === 'showTab') window.showTab(args);
+    else if (action === 'closeModal') window.closeModal();
+    else if (action === 'authAction') window.authAction();
+    else if (action === 'triggerFileInput') document.getElementById('file-input').click();
+});
+
+document.addEventListener('input', (e) => {
+    const el = e.target.closest('[data-input]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-input');
+    if (action === 'filterMyTrips') window.filterMyTrips();
+    else if (action === 'filterCommunity') window.filterCommunity();
+});
+
+document.addEventListener('change', (e) => {
+    const el = e.target.closest('[data-change]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-change');
+    if (action === 'filterMyTrips') window.filterMyTrips();
+    else if (action === 'filterCommunity') window.filterCommunity();
+    else if (action === 'handleFileSelect') window.handleFileSelect(e);
+});
+
+document.addEventListener('drop', (e) => {
+    const el = e.target.closest('[data-drop]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-drop');
+    if (action === 'handleDrop') window.handleDrop(e);
+});
+
+document.addEventListener('dragover', (e) => {
+    const el = e.target.closest('[data-dragover]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-dragover');
+    if (action === 'handleDragOver') window.handleDragOver(e);
+});
+
+document.addEventListener('dragleave', (e) => {
+    const el = e.target.closest('[data-dragleave]');
+    if (!el) return;
+    
+    const action = el.getAttribute('data-dragleave');
+    if (action === 'handleDragLeave') window.handleDragLeave(e);
+});
