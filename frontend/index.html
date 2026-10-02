@@ -321,7 +321,7 @@
                 <div class="error-banner hidden" id="error-banner">
                     <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>warning</span>
                     <span id="error-text"></span>
-                    <button onclick="dismissError()"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span></button>
+                    <button onclick="dismissError()" aria-label="Tutup pesan error"><span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span></button>
                 </div>
 
                 <!-- RESULT SECTION -->
@@ -627,7 +627,7 @@
     <!-- ══ MODALS ══════════════════════════════════════════ -->
     <div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal()">
         <div class="modal-box" onclick="event.stopPropagation()">
-            <button class="modal-close" onclick="closeModal()">
+            <button class="modal-close" onclick="closeModal()" aria-label="Tutup modal">
                 <span class="material-symbols-outlined" aria-hidden="true" translate="no" data-nosnippet>close</span>
             </button>
             <div class="modal-body" id="modal-body"></div>
