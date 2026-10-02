@@ -4,8 +4,6 @@
 //  Pattern: Config-first init → Auth → UI → API calls
 // ════════════════════════════════════════════════════════════════
 
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { createIcons, Map as LucideMap, Menu, LogOut } from 'lucide'
 
 let myTripsCache = [];
@@ -122,10 +120,7 @@ async function loadLeaflet() {
 }
 
 // Markdown renderer config
-marked.setOptions({
-    breaks: true,
-    gfm: true,
-})
+
 
 // ══════════════════════════════════════════════════════════════
 //  BOOT: Fetch Firebase config → Init Firebase
@@ -596,9 +591,9 @@ window.generateItinerary = async function () {
                                 const parts = fullText.split('---BUDGET---')
                                 fullText = parts[0]
                                 budgetJsonStr = parts[1] || ''
-                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
                             } else {
-                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
                             }
                         } else {
                             budgetJsonStr += data.content
@@ -717,9 +712,9 @@ window.generateVision = async function () {
                                 const parts = fullText.split('---BUDGET---')
                                 fullText = parts[0]
                                 budgetJsonStr = parts[1] || ''
-                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
                             } else {
-                                body.innerHTML = DOMPurify.sanitize(marked.parse(fullText)) + '<span class="cursor"></span>'
+                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
                             }
                         } else {
                             budgetJsonStr += data.content
@@ -857,14 +852,14 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
     const body = document.getElementById('result-body')
     const meta = document.getElementById('result-meta')
 
-    body.innerHTML = DOMPurify.sanitize(marked.parse(itineraryText))
+    body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(itineraryText))
 
     const parts = []
     if (tripData.destination) parts.push(`<span class="material-symbols-outlined">location_on</span> <strong>${tripData.destination}</strong>`)
     if (tripData.duration) parts.push(`<span class="material-symbols-outlined">calendar_month</span> ${tripData.duration} hari`)
     if (tripData.budget) parts.push(`<span class="material-symbols-outlined">payments</span> ${tripData.budget}`)
     if (tripData.style) parts.push(`<span class="material-symbols-outlined">luggage</span> ${tripData.style}`)
-    meta.innerHTML = DOMPurify.sanitize(parts.join(' &nbsp;·&nbsp; '))
+    meta.innerHTML = window.DOMPurify.sanitize(parts.join(' &nbsp;·&nbsp; '))
 
     // Set budget state
     budgetData = budgetBreakdown
@@ -1368,7 +1363,7 @@ async function openTripModal(trip) {
 
     const contentEl = document.getElementById('modal-itinerary-content')
     if (contentEl) {
-        contentEl.innerHTML = DOMPurify.sanitize(`<div class="modal-markdown">${marked.parse(itineraryText || '*Konten tidak tersedia.*')}</div>`)
+        contentEl.innerHTML = window.DOMPurify.sanitize(`<div class="modal-markdown">${window.marked.parse(itineraryText || '*Konten tidak tersedia.*')}</div>`)
     }
 }
 
@@ -1871,7 +1866,7 @@ async function renderLeafletMap(days) {
             const timeIcon = TIME_ICONS[loc.time] || 'location_on'
             const gmapsUrl = buildGoogleMapsUrl([pos])
 
-            const popupContent = DOMPurify.sanitize(`
+            const popupContent = window.DOMPurify.sanitize(`
                 <div class="map-popup">
                     <div class="map-popup-header" style="border-left: 3px solid ${color}">
                         <span class="map-popup-day">Hari ${day.day} · <span class="material-symbols-outlined" style="font-size:12px">${timeIcon}</span> ${loc.time || ''}</span>
@@ -1935,7 +1930,7 @@ async function renderLeafletMap(days) {
         const gmapsRouteUrl = buildGoogleMapsUrl(dayLatLngs)
         const legendItem = document.createElement('div')
         legendItem.className = 'map-legend-day'
-        legendItem.innerHTML = DOMPurify.sanitize(`
+        legendItem.innerHTML = window.DOMPurify.sanitize(`
             <span class="map-legend-dot" style="background:${color}"></span>
             <span class="map-legend-label">
                 <strong>Hari ${day.day}</strong>${day.theme ? ` — ${day.theme}` : ''}
@@ -2021,7 +2016,7 @@ async function renderBudgetChart(data) {
     // Update total display card
     const totalDisplay = document.getElementById('budget-total-display')
     if (totalDisplay) {
-        totalDisplay.innerHTML = DOMPurify.sanitize(`<span style="font-size: 0.9rem; font-family: var(--font-body); display: block; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;">Total Estimasi Anggaran</span>${formatRupiah(total)}`)
+        totalDisplay.innerHTML = window.DOMPurify.sanitize(`<span style="font-size: 0.9rem; font-family: var(--font-body); display: block; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;">Total Estimasi Anggaran</span>${formatRupiah(total)}`)
     }
 
     // 2. Render summary table
@@ -2033,7 +2028,7 @@ async function renderBudgetChart(data) {
             const percentage = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0
 
             const tr = document.createElement('tr')
-            tr.innerHTML = DOMPurify.sanitize(`
+            tr.innerHTML = window.DOMPurify.sanitize(`
                 <td>
                     <div class="budget-category-label">
                         <span class="budget-category-dot" style="background: ${color}"></span>
@@ -2259,7 +2254,7 @@ window.discoverNearby = async function(type) {
 
             L.marker([el.lat, el.lon], { icon: divIcon })
                 .addTo(discoveryLayerGroup)
-                .bindPopup(DOMPurify.sanitize(`<strong>${name}</strong><br><span style="font-size:12px; color:#666;">Lokasi dari OpenStreetMap</span>`), { className: 'leaflet-popup-custom', maxWidth: 200 });
+                .bindPopup(window.DOMPurify.sanitize(`<strong>${name}</strong><br><span style="font-size:12px; color:#666;">Lokasi dari OpenStreetMap</span>`), { className: 'leaflet-popup-custom', maxWidth: 200 });
         });
 
         document.getElementById('btn-clear-discovery').classList.remove('hidden');
