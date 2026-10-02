@@ -323,7 +323,7 @@ app.get("/api/health", (_req, res) => {
 
 
 
-app.post("/api/extract-locations", optionalVerifyToken, aiRateLimiter, async (req, res) => {
+app.post("/api/extract-locations", verifyToken, aiRateLimiter, async (req, res) => {
     const { itineraryText, duration } = req.body;
     if (!itineraryText || itineraryText.length < 100) return res.status(400).json({ error: "itineraryText terlalu pendek." });
     
@@ -390,7 +390,7 @@ app.get("/api/config", (_req, res) => {
 });
 
 // ── 7.3  AI GENERATE — Text Input ──────────────
-app.post("/api/generate", optionalVerifyToken, aiRateLimiter, async (req, res) => {
+app.post("/api/generate", verifyToken, aiRateLimiter, async (req, res) => {
     const { origin, destination, duration, budget, style } = req.body;
     
     if (!destination || !duration || !budget || !style) {
@@ -425,7 +425,7 @@ app.post("/api/generate", optionalVerifyToken, aiRateLimiter, async (req, res) =
 });
 
 // ── 7.4  AI GENERATE — Vision / Image Upload ───
-app.post("/api/generate-vision", optionalVerifyToken, aiVisionRateLimiter, upload.single("image"), async (req, res) => {
+app.post("/api/generate-vision", verifyToken, aiVisionRateLimiter, upload.single("image"), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: "Gambar wajib diunggah." });
     }
