@@ -641,21 +641,52 @@ app.delete("/api/itineraries/:id", verifyToken, apiRateLimiter, async (req, res)
 
 // ── 7.11 LIKE AN ITINERARY ────────────────────
 app.post("/api/itineraries/:id/like", verifyToken, apiRateLimiter, async (req, res) => {
+    const uid = req.user.uid;
+    const ref = db.collection("itineraries").doc(req.params.id);
+    
     try {
-        const ref = db.collection("itineraries").doc(req.params.id);
-        const doc = await ref.get();
-
-        if (!doc.exists) {
-            return res.status(404).json({ error: "Itinerary tidak ditemukan." });
-        }
-
-        await ref.update({ likes: FieldValue.increment(1) });
-        return res.json({ success: true, message: "Itinerary disukai!" });
+        const result = await db.runTransaction(async (t) => {
+            const doc = await t.get(ref);
+            if (!doc.exists) throw { status: 404, message: "Itinerary tidak ditemukan." };
+            
+            const data = doc.data();
+            const likedBy = data.likedBy || [];
+            let newLikes = data.likes || 0;
+            let isLiked = false;
+            
+            if (likedBy.includes(uid)) {
+                // Unlike
+                t.update(ref, { 
+                    likedBy: FieldValue.arrayRemove(uid),
+                    likes: FieldValue.increment(-1)
+                });
+                isLiked = false;
+                newLikes = Math.max(0, newLikes - 1);
+            } else {
+                // Like
+                t.update(ref, {
+                    likedBy: FieldValue.arrayUnion(uid),
+                    likes: FieldValue.increment(1)
+                });
+                isLiked = true;
+                newLikes++;
+            }
+            return { isLiked, newLikes };
+        });
+        
+        return res.json({ 
+            success: true, 
+            message: result.isLiked ? "Itinerary disukai!" : "Batal menyukai itinerary.",
+            likes: result.newLikes,
+            isLiked: result.isLiked
+        });
     } catch (err) {
-        console.error("❌ Firestore like error:", err);
-        return res.status(500).json({ error: "Gagal menyukai itinerary." });
+        console.error("❌ Firestore like transaction error:", err);
+        if (err.status) return res.status(err.status).json({ error: err.message });
+        return res.status(500).json({ error: "Gagal memproses like." });
     }
 });
+;
 
 // ─────────────────────────────────────────────
 //  7.12 SERVING STATIC FILES (FRONTEND)
