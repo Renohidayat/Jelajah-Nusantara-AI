@@ -1256,38 +1256,28 @@ async function openTripModal(trip) {
     const duration = trip.tripData?.duration
     const tripStyle = trip.tripData?.style
     const budget = trip.tripData?.budget
-    const destImage = getDestImage(dest)
     const date = formatDate(trip.createdAt)
     const userName = trip.userName || 'Traveler'
     const likes = trip.likes || 0
     const isPublic = trip.isPublic
     const isOwner = currentUser && currentUser.uid === trip.userId
 
-    let avatarHTML = ''
-    if (trip.userPhoto) {
-        avatarHTML = `<img class="modal-author-avatar" src="${trip.userPhoto}" alt="${userName}"
-            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-            <div class="modal-author-fallback" style="display:none">${userName[0].toUpperCase()}</div>`
-    } else {
-        avatarHTML = `<div class="modal-author-fallback">${userName[0].toUpperCase()}</div>`
-    }
-
     const badges = [
-        duration ? `<span class="modal-badge"><span class="material-symbols-outlined">calendar_month</span>${duration} hari</span>` : '',
-        tripStyle ? `<span class="modal-badge"><span class="material-symbols-outlined">luggage</span>${tripStyle.split(' ')[0]}</span>` : '',
-        budget ? `<span class="modal-badge"><span class="material-symbols-outlined">payments</span>${budget.split(' ')[0]}</span>` : '',
+        duration ? `<span class="modal-badge"><span class="material-symbols-outlined">calendar_month</span>${escapeHTML(duration)} hari</span>` : '',
+        tripStyle ? `<span class="modal-badge"><span class="material-symbols-outlined">luggage</span>${escapeHTML(tripStyle.split(' ')[0])}</span>` : '',
+        budget ? `<span class="modal-badge"><span class="material-symbols-outlined">payments</span>${escapeHTML(budget.split(' ')[0])}</span>` : '',
         isPublic ? `<span class="modal-badge modal-badge--public"><span class="material-symbols-outlined">public</span>Publik</span>` : '',
     ].filter(Boolean).join('')
 
     const ownerActions = isOwner ? `
         <div class="modal-owner-actions">
             <button class="modal-action-btn modal-action-toggle"
-                onclick="togglePublic('${trip.id}', ${!isPublic}, this)">
+                onclick="togglePublic('${escapeHTML(trip.id)}', ${!isPublic}, this)">
                 <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
                 ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
             </button>
             <button class="modal-action-btn modal-action-delete"
-                onclick="deleteTrip('${trip.id}', null); closeModal()">
+                onclick="deleteTrip('${escapeHTML(trip.id)}', null); closeModal()">
                 <span class="material-symbols-outlined">delete</span>
                 Hapus
             </button>
@@ -1296,20 +1286,20 @@ async function openTripModal(trip) {
     body.innerHTML = `
         <div class="modal-trip-header">
             <div class="modal-trip-banner">
-                <span class="modal-trip-emoji"><span class="material-symbols-outlined">${destIcon}</span></span>
+                <span class="modal-trip-emoji"><span class="material-symbols-outlined">${escapeHTML(destIcon)}</span></span>
                 <div>
-                    <h2 class="modal-trip-dest">${dest}</h2>
+                    <h2 class="modal-trip-dest"></h2>
                 </div>
             </div>
             <div class="modal-trip-meta">
                 ${badges ? `<div class="modal-badges">${badges}</div>` : ''}
                 <div class="modal-author-row">
                     <div class="modal-author">
-                        ${avatarHTML}
-                        <span class="modal-author-name">${userName}</span>
-                        ${date ? `<span class="modal-author-sep">·</span><span class="modal-author-date">${date}</span>` : ''}
+                        <div class="modal-avatar-container"></div>
+                        <span class="modal-author-name"></span>
+                        ${date ? `<span class="modal-author-sep">·</span><span class="modal-author-date">${escapeHTML(date)}</span>` : ''}
                     </div>
-                    <button class="modal-like-btn" onclick="likeTrip('${trip.id}', this)">
+                    <button class="modal-like-btn" onclick="likeTrip('${escapeHTML(trip.id)}', this)">
                         <span class="material-symbols-outlined">favorite</span>
                         <span>${likes}</span>
                     </button>
@@ -1325,21 +1315,42 @@ async function openTripModal(trip) {
             </div>
         </div>`
 
+    // DOM Safe Setters
+    body.querySelector('.modal-trip-dest').textContent = dest;
+    body.querySelector('.modal-author-name').textContent = userName;
+
+    // Avatar Handling
+    const avatarContainer = body.querySelector('.modal-avatar-container');
+    const safePhotoUrl = safeUrl(trip.userPhoto);
+    const fallback = document.createElement('div');
+    fallback.className = 'modal-author-fallback';
+    fallback.textContent = userName[0].toUpperCase();
+    
+    if (safePhotoUrl) {
+        const img = document.createElement('img');
+        img.className = 'modal-author-avatar';
+        img.src = safePhotoUrl;
+        img.alt = userName;
+        img.onerror = function() {
+            this.style.display = 'none';
+            fallback.style.display = 'flex';
+        };
+        fallback.style.display = 'none';
+        avatarContainer.appendChild(img);
+    }
+    avatarContainer.appendChild(fallback);
+
     overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
     
-    // Focus trap
     const modalBox = overlay.querySelector('.modal-box');
     if(modalBox) {
         modalBox.setAttribute('tabindex', '-1');
         modalBox.focus();
     }
     
-    // Global Esc listener
     window._modalEscListener = function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
+        if (e.key === 'Escape') closeModal();
     };
     document.addEventListener('keydown', window._modalEscListener);
 
