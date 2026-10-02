@@ -266,3 +266,27 @@
 
 .w-full { width: 100%; justify-content: center; }
 
+
+
+/* Markdown Tables */
+.modal-markdown table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.modal-markdown th,
+.modal-markdown td {
+    border: 1px solid var(--border-soft);
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.modal-markdown th {
+    background: var(--surface-hover);
+    font-weight: 600;
+}
+\n@media (max-width: 480px) {\n  .modal-itinerary-content { padding: var(--sp-base); }\n  .modal-markdown { font-size: 14px; }\n}\n
