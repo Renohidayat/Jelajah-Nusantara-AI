@@ -6,7 +6,7 @@
 
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
-import { createIcons, icons } from 'lucide'
+import { createIcons, Map as LucideMap, Menu, LogOut } from 'lucide'
 
 let myTripsCache = [];
 let communityTripsCache = [];
@@ -152,7 +152,13 @@ async function boot() {
         
         // Render lucide icons
         if (typeof createIcons !== 'undefined') {
-            createIcons({ icons })
+            createIcons({
+    icons: {
+        Map: LucideMap,
+        Menu,
+        LogOut
+    }
+})
         }
 
         // FIX: Hanya panggil loadCommunity jika elemennya memang ada di halaman ini!
