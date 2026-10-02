@@ -99,14 +99,67 @@ async function doFetchCompletion(modelName, messages, config) {
             body: JSON.stringify(payload),
             signal: controller.signal
         });
+        const duration = Date.now() - start;
+        const data = await res.json().catch(() => null);
+        
+        if (!res.ok) {
+            const errCode = res.status;
+            const msg = data?.error?.message || "Unknown error";
+            console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
+            throw { status: errCode, message: msg };
+        }
+        
+        const content = data?.choices?.[0]?.message?.content;
+        const usage = data?.usage?.total_tokens || 0;
+        const reqId = data?.id || "unknown";
+        
+        console.log(`✅ AI Success [${modelName}] (ReqID: ${reqId}, Duration: ${duration}ms, Tokens: ${usage})`);
+        return content;
+    } finally {
+        clearTimeout(id);
+    }
+}
+
+async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), config.timeoutMs);
+    const start = Date.now();
+    try {
+        const payload = {
+            model: modelName,
+            messages,
+            stream: true
+        };
+        const res = await fetch(`${config.baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${config.apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        
+        if (!res.ok) {
+            const duration = Date.now() - start;
+            const data = await res.json().catch(() => null);
+            const errCode = res.status;
+            const msg = data?.error?.message || "Unknown error";
+            console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
+            throw { status: errCode, message: msg };
+        }
+        
+        const reader = res.body;
         const decoder = new TextDecoder("utf-8");
         let buffer = '';
         let fullRawText = '';
         let chunkCount = 0;
+        
         for await (const chunk of reader) {
             const strChunk = decoder.decode(chunk, { stream: true });
             buffer += strChunk;
             fullRawText += strChunk;
+            
             const lines = buffer.split('\n');
             buffer = lines.pop(); // last incomplete line
             
@@ -124,7 +177,7 @@ async function doFetchCompletion(modelName, messages, config) {
                             chunkCount++;
                         }
                     } catch (e) {
-                        // ignore parse error
+                        // ignore parse error for incomplete json chunks
                     }
                 }
             }
