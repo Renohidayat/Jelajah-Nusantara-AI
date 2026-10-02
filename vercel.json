@@ -47,7 +47,7 @@
         },
         {
           "key": "Content-Security-Policy-Report-Only",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://images.unsplash.com https://*.googleusercontent.com https://tile.openstreetmap.org https://upload.wikimedia.org; connect-src 'self' https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://router.project-osrm.org https://overpass-api.de https://api.open-meteo.com https://id.wikipedia.org https://*.firebaseio.com; frame-src https://*.firebaseapp.com"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://www.gstatic.com https://images.unsplash.com https://*.googleusercontent.com https://tile.openstreetmap.org https://upload.wikimedia.org; connect-src 'self' https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://router.project-osrm.org https://overpass-api.de https://api.open-meteo.com https://id.wikipedia.org https://*.firebaseio.com; frame-src https://*.firebaseapp.com"
         },
         {
           "key": "Permissions-Policy",
