@@ -486,9 +486,23 @@ app.post("/api/generate-vision", verifyToken, aiVisionRateLimiter, upload.single
 app.post("/api/itineraries", verifyToken, apiRateLimiter, async (req, res) => {
     const { tripData, itineraryText, isPublic = false } = req.body;
 
-    if (!tripData || !itineraryText) {
-        return res.status(400).json({ error: "Data 'tripData' dan 'itineraryText' wajib ada." });
+    if (!tripData || typeof tripData !== 'object' || !itineraryText || typeof itineraryText !== 'string') {
+        return res.status(400).json({ error: "Data 'tripData' (objek) dan 'itineraryText' (string) wajib ada." });
     }
+
+    if (itineraryText.length > 20000) {
+        return res.status(400).json({ error: "Teks itinerary terlalu panjang (maksimal 20.000 karakter)." });
+    }
+    
+    // Validate length of tripData fields to prevent abuse
+    const MAX_FIELD_LENGTH = 150;
+    const safeTripData = {
+        origin: String(tripData.origin || "").substring(0, MAX_FIELD_LENGTH),
+        destination: String(tripData.destination || "").substring(0, MAX_FIELD_LENGTH),
+        duration: String(tripData.duration || "").substring(0, MAX_FIELD_LENGTH),
+        budget: String(tripData.budget || "").substring(0, MAX_FIELD_LENGTH),
+        style: String(tripData.style || "").substring(0, MAX_FIELD_LENGTH)
+    };
 
     try {
         const docRef = await db.collection("itineraries").add({
@@ -497,12 +511,7 @@ app.post("/api/itineraries", verifyToken, apiRateLimiter, async (req, res) => {
             userPhoto: req.user.picture || "",
             isPublic: Boolean(isPublic),
             createdAt: FieldValue.serverTimestamp(),
-            tripData: {
-                origin: tripData.origin || "",
-                destination: tripData.destination || "",
-                duration: tripData.duration || "",
-                budget: tripData.budget || "",
-                style: tripData.style || "" },
+            tripData: safeTripData,
             itineraryText,
             likes: 0,
             rating: 0 });
