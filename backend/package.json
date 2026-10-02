@@ -1,27 +1,28 @@
 {
-    "name": "jelajah-nusantara-backend",
-    "version": "1.0.0",
-    "description": "AI-powered Travel Planner Backend for Jelajah Nusantara",
-    "main": "server.js",
-    "type": "module",
-    "scripts": {
-        "start": "node server.js",
-        "dev": "nodemon server.js"
-    },
-    "dependencies": {
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.5",
-        "express": "^4.19.2",
-        "express-rate-limit": "^8.7.0",
-        "file-type": "^22.1.1",
-        "firebase-admin": "^12.2.0",
-        "helmet": "^8.3.0",
-        "multer": "^1.4.5-lts.1"
-    },
-    "devDependencies": {
-        "nodemon": "^3.1.4"
-    },
-    "engines": {
-        "node": ">=18.0.0"
-    }
+  "name": "jelajah-nusantara-backend",
+  "version": "1.0.0",
+  "description": "AI-powered Travel Planner Backend for Jelajah Nusantara",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
+    "file-type": "^22.1.1",
+    "firebase-admin": "^14.5.0",
+    "helmet": "^8.3.0",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^14.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
