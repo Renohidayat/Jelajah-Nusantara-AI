@@ -14,7 +14,7 @@ import { fileURLToPath } from "url";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { generateContent, generateContentStream } from "./ai/openagentic.js";
+import { generateContent, generateContentStream, aiConfig } from "./ai/openagentic.js";
 import { rateLimit } from "express-rate-limit";
 import { fileTypeFromBuffer } from "file-type";
 
@@ -71,6 +71,31 @@ try {
     // Don't process.exit on serverless environments to avoid generic 500 errors
     // Instead, leave db and adminAuth as null so the app still boots for /api/health
 }
+
+// ─────────────────────────────────────────────
+//  2. GLOBAL CIRCUIT BREAKER FOR AI
+// ─────────────────────────────────────────────
+aiConfig.circuitBreakerHook = async () => {
+    if (!db) return true; // Biarkan lolos jika Firebase gagal (endpoints AI juga akan gagal di middleware verifyToken jika db mati)
+    
+    const today = new Date().toISOString().split('T')[0];
+    const docRef = db.collection('metadata').doc(`ai_usage_${today}`);
+    // Default limit 200, dapat diatur via env (sekitar 80% dari batas vendor yang sebenarnya)
+    const limit = parseInt(process.env.OPENAGENTIC_GLOBAL_LIMIT || "200", 10);
+    
+    try {
+        const doc = await docRef.get();
+        if (doc.exists && doc.data().count >= limit) {
+            return false; // Tolak request karena melebihi batas global
+        }
+        // Tambahkan hitungan
+        await docRef.set({ count: FieldValue.increment(1) }, { merge: true });
+        return true;
+    } catch (e) {
+        console.warn("⚠️ Circuit breaker check failed:", e.message);
+        return true; // Fail open
+    }
+};
 
 // OpenAgentic AI Initialization is handled in backend/ai/openagentic.js
 
@@ -354,7 +379,9 @@ app.get("/api/health", (_req, res) => {
     res.json({
         status: "✅ Jelajah Nusantara API is running",
         version: "1.0.0",
-        timestamp: new Date().toISOString() });
+        firebaseInitialized: !!db,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // ── 7.1b EXTRACT LOCATIONS FOR MAP ─────────────

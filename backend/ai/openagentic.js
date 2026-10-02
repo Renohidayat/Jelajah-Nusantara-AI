@@ -78,6 +78,18 @@ async function doFetchCompletion(modelName, messages, config) {
             messages,
             stream: false
         };
+        if (config.circuitBreakerHook) {
+            const allowed = await config.circuitBreakerHook();
+            if (!allowed) {
+                throw { status: 503, message: "Maaf, batas maksimum harian penggunaan AI secara global telah tercapai. Silakan coba lagi besok." };
+            }
+        }
+        if (config.circuitBreakerHook) {
+            const allowed = await config.circuitBreakerHook();
+            if (!allowed) {
+                throw { status: 503, message: "Maaf, batas maksimum harian penggunaan AI secara global telah tercapai. Silakan coba lagi besok." };
+            }
+        }
         const res = await fetch(`${config.baseUrl}/chat/completions`, {
             method: "POST",
             headers: {
