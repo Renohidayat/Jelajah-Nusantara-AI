@@ -522,6 +522,12 @@ function processFile(file) {
 // ══════════════════════════════════════════════════════════════
 let isGenerating = false;
 
+/** Lempar error bila stream SSE berakhir tanpa event `done` atau teksnya terlalu pendek. */
+function assertStreamComplete(finished, text) {
+    if (!finished) throw new Error('Koneksi ke server terputus sebelum itinerary selesai dibuat. Silakan coba lagi.')
+    if (text.trim().length < 100) throw new Error('AI tidak mengembalikan itinerary yang lengkap. Silakan coba lagi.')
+}
+
 window.generateItinerary = async function () {
     if (isGenerating) return;
     
@@ -616,6 +622,8 @@ window.generateItinerary = async function () {
                         } else {
                             budgetJsonStr += data.content
                         }
+                    } else if (data.type === 'done') {
+                        streamFinishedGracefully = true
                     } else if (data.type === 'error') {
                         throw new Error(data.error)
                     }
@@ -623,6 +631,7 @@ window.generateItinerary = async function () {
             }
         }
         
+        assertStreamComplete(streamFinishedGracefully, fullText)
         let budgetBreakdown = null
         if (budgetJsonStr.trim()) {
             try {
@@ -710,6 +719,7 @@ window.generateVision = async function () {
         let budgetJsonStr = ''
         let tripData = null
 
+        let streamFinishedGracefully = false
         while (true) {
             const { value, done } = await reader.read()
             if (done) break
@@ -741,6 +751,8 @@ window.generateVision = async function () {
                         } else {
                             budgetJsonStr += data.content
                         }
+                    } else if (data.type === 'done') {
+                        streamFinishedGracefully = true
                     } else if (data.type === 'error') {
                         throw new Error(data.error)
                     }
@@ -748,6 +760,7 @@ window.generateVision = async function () {
             }
         }
         
+        assertStreamComplete(streamFinishedGracefully, fullText)
         let budgetBreakdown = null
         if (budgetJsonStr.trim()) {
             try {
