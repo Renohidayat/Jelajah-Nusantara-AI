@@ -41,6 +41,24 @@ export async function checkModelsOnStartup() {
 }
 checkModelsOnStartup();
 
+/**
+ * Tentukan tindakan untuk error dari OpenAgentic.
+ * - "fatal": key/plan bermasalah, hentikan semua percobaan.
+ * - "next" : model ini tidak bisa dipakai sekarang, langsung pindah model cadangan.
+ * - "retry": gangguan sementara, coba lagi model yang sama setelah jeda.
+ */
+function classifyAiError(err) {
+    const isTimeout = err?.name === 'AbortError' || err?.name === 'TimeoutError' || err?.type === 'aborted';
+    if (isTimeout) return { action: "next", status: 408 };
+    const status = err?.status || 500;
+    const code = err?.code || "";
+    if (status === 404 || code === "model_not_available") return { action: "next", status };
+    if (status === 401 || status === 402 || status === 403) return { action: "fatal", status };
+    if (status === 429 && code === "free_shared_pool_exhausted") return { action: "next", status };
+    if (status === 429 || status >= 500) return { action: "retry", status };
+    return { action: "next", status };
+}
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -105,7 +123,7 @@ async function doFetchCompletion(modelName, messages, config) {
             const errCode = res.status;
             const msg = data?.error?.message || "Unknown error";
             console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
-            throw { status: errCode, message: msg };
+            throw { status: errCode, code: data?.error?.code, message: msg };
         }
         
         const content = data?.choices?.[0]?.message?.content;
@@ -145,7 +163,7 @@ async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
             const errCode = res.status;
             const msg = data?.error?.message || "Unknown error";
             console.warn(`⚠️ AI HTTP ${errCode} [${modelName}] (${duration}ms): ${msg}`);
-            throw { status: errCode, message: msg };
+            throw { status: errCode, code: data?.error?.code, message: msg };
         }
         
         const reader = res.body;
@@ -256,18 +274,17 @@ export async function generateContentStream(systemPrompt, userPrompt, isVision =
                 return; // success
             } catch (err) {
                 lastError = err;
-                const isTimeout = err.name === 'AbortError' || err.type === 'aborted';
-                const status = err.status || (isTimeout ? 408 : 500);
+                const { action, status } = classifyAiError(err);
                 
-                if (status === 401 || status === 402 || status === 403) {
+                if (action === "fatal") {
                     console.error(`❌ API key bermasalah (HTTP ${status}). Tidak di-retry.`);
                     throw { status, publicMessage: "Kunci API tidak valid atau kedaluwarsa. Hubungi admin." };
                 }
-                if (status === 404) {
-                    console.warn(`⚠️ Model ${model} tidak tersedia. Pindah model cadangan.`);
+                if (action === "next") {
+                    console.warn(`⚠️ Model ${model} dilewati (HTTP ${status}${err?.code ? ", " + err.code : ""}). Pindah model cadangan.`);
                     break;
                 }
-                if (status === 429 || status >= 500 || isTimeout) {
+                if (action === "retry") {
                     attempt++;
                     if (attempt <= aiConfig.maxRetries) {
                         const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
@@ -281,7 +298,13 @@ export async function generateContentStream(systemPrompt, userPrompt, isVision =
         }
     }
     
-    throw { status: lastError?.status || 500, publicMessage: lastError?.publicMessage || "Gagal membuat itinerary." };
+    const busy = lastError?.status === 429;
+    throw {
+        status: lastError?.status || 500,
+        publicMessage: lastError?.publicMessage || (busy
+            ? "Layanan AI sedang penuh. Silakan coba lagi dalam beberapa saat."
+            : "Gagal membuat itinerary.")
+    };
 }
 
 export async function generateContent(systemPrompt, userPrompt, isVision = false, imageBase64 = null, imageMime = null) {
@@ -335,18 +358,17 @@ export async function generateContent(systemPrompt, userPrompt, isVision = false
                 } catch (err) {
                     lastError = err;
                     // Check if error is abort/timeout
-                    const isTimeout = err.name === 'AbortError' || err.type === 'aborted';
-                    const status = err.status || (isTimeout ? 408 : 500);
+                    const { action, status } = classifyAiError(err);
                     
-                    if (status === 401 || status === 402 || status === 403) {
+                    if (action === "fatal") {
                         console.error(`❌ API key atau plan bermasalah (HTTP ${status}). Tidak di-retry.`);
                         throw { status, publicMessage: "Kunci API tidak valid atau kedaluwarsa. Hubungi admin." };
                     }
-                    if (status === 404) {
-                        console.warn(`⚠️ Model ${model} tidak tersedia (HTTP 404). Pindah model cadangan.`);
+                    if (action === "next") {
+                        console.warn(`⚠️ Model ${model} dilewati (HTTP ${status}${err?.code ? ", " + err.code : ""}). Pindah model cadangan.`);
                         break; // Break inner loop to go to next model
                     }
-                    if (status === 429 || status >= 500 || isTimeout) {
+                    if (action === "retry") {
                         attempt++;
                         if (attempt <= aiConfig.maxRetries) {
                             const delayMs = Math.min(1000 * 2 ** (attempt - 1) + Math.random() * 500, 8000);
