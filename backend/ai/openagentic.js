@@ -279,6 +279,9 @@ export async function generateContentStream(systemPrompt, userPrompt, isVision =
         : [aiConfig.model, ...aiConfig.fallbackModels];
     let lastError = null;
     const deadline = Date.now() + aiConfig.deadlineMs;
+    // Setelah ada teks terkirim ke klien, retry akan menduplikasi isi; jadi tidak boleh.
+    let emitted = false;
+    const emit = (chunk) => { emitted = true; onChunk(chunk); };
 
     modelLoop: for (const model of models) {
         let attempt = 0;
@@ -289,10 +292,14 @@ export async function generateContentStream(systemPrompt, userPrompt, isVision =
                     console.warn("⚠️ Tenggat total AI habis. Berhenti mencoba model lain.");
                     break modelLoop;
                 }
-                await doFetchStreamCompletion(model, messages, { ...aiConfig, attemptTimeoutMs: remaining }, onChunk);
+                await doFetchStreamCompletion(model, messages, { ...aiConfig, attemptTimeoutMs: remaining }, emit);
                 return; // success
             } catch (err) {
                 lastError = err;
+                if (emitted) {
+                    console.error(`❌ Stream [${model}] terputus setelah sebagian teks terkirim:`, err?.message || err?.name || err);
+                    throw { status: 502, publicMessage: "Respons AI terputus sebelum selesai. Silakan coba lagi." };
+                }
                 const { action, status } = classifyAiError(err);
                 
                 if (action === "fatal") {
