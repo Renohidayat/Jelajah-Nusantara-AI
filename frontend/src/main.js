@@ -591,6 +591,12 @@ window.generateItinerary = async function () {
         let tripData = null
 
         let streamFinishedGracefully = false;
+        let lastRenderTime = 0;
+        const renderDOM = () => {
+            if (isBudgetPart) return;
+            body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>';
+        };
+
         while (true) {
             const { value, done } = await reader.read()
             if (done) break
@@ -599,6 +605,7 @@ window.generateItinerary = async function () {
             const lines = buffer.split('\n\n')
             buffer = lines.pop()
             
+            let hasChunk = false;
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     const dataStr = line.substring(6)
@@ -610,14 +617,13 @@ window.generateItinerary = async function () {
                     } else if (data.type === 'chunk') {
                         if (!isBudgetPart) {
                             fullText += data.content
+                            hasChunk = true;
                             if (fullText.includes('---BUDGET---')) {
                                 isBudgetPart = true
                                 const parts = fullText.split('---BUDGET---')
                                 fullText = parts[0]
                                 budgetJsonStr = parts[1] || ''
-                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
-                            } else {
-                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
+                                renderDOM()
                             }
                         } else {
                             budgetJsonStr += data.content
@@ -629,7 +635,17 @@ window.generateItinerary = async function () {
                     }
                 }
             }
+            
+            if (hasChunk && !isBudgetPart) {
+                const now = Date.now();
+                if (now - lastRenderTime > 50) {
+                    renderDOM();
+                    lastRenderTime = now;
+                }
+            }
         }
+        
+        if (!isBudgetPart) renderDOM();
         
         assertStreamComplete(streamFinishedGracefully, fullText)
         let budgetBreakdown = null
@@ -720,6 +736,12 @@ window.generateVision = async function () {
         let tripData = null
 
         let streamFinishedGracefully = false
+        let lastRenderTime = 0;
+        const renderDOM = () => {
+            if (isBudgetPart) return;
+            body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>';
+        };
+
         while (true) {
             const { value, done } = await reader.read()
             if (done) break
@@ -728,6 +750,7 @@ window.generateVision = async function () {
             const lines = buffer.split('\n\n')
             buffer = lines.pop()
             
+            let hasChunk = false;
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     const dataStr = line.substring(6)
@@ -739,14 +762,13 @@ window.generateVision = async function () {
                     } else if (data.type === 'chunk') {
                         if (!isBudgetPart) {
                             fullText += data.content
+                            hasChunk = true;
                             if (fullText.includes('---BUDGET---')) {
                                 isBudgetPart = true
                                 const parts = fullText.split('---BUDGET---')
                                 fullText = parts[0]
                                 budgetJsonStr = parts[1] || ''
-                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
-                            } else {
-                                body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(fullText)) + '<span class="cursor"></span>'
+                                renderDOM()
                             }
                         } else {
                             budgetJsonStr += data.content
@@ -758,7 +780,17 @@ window.generateVision = async function () {
                     }
                 }
             }
+            
+            if (hasChunk && !isBudgetPart) {
+                const now = Date.now();
+                if (now - lastRenderTime > 50) {
+                    renderDOM();
+                    lastRenderTime = now;
+                }
+            }
         }
+        
+        if (!isBudgetPart) renderDOM();
         
         assertStreamComplete(streamFinishedGracefully, fullText)
         let budgetBreakdown = null
