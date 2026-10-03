@@ -446,8 +446,8 @@ app.get("/api/config", (_req, res) => {
 });
 
 // ── 7.3  AI GENERATE — Text Input ──────────────
-app.post("/api/generate", aiRateLimiter, async (req, res) => {
-req.user = { name: "Test User" };
+app.post("/api/generate", verifyToken, aiRateLimiter, async (req, res) => {
+
     const { origin, destination, duration, budget, style } = req.body;
     
     if (!destination || !duration || !budget || !style) {
