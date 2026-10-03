@@ -8,7 +8,12 @@ export const aiConfig = {
     baseUrl: process.env.OPENAGENTIC_BASE_URL || "https://openagentic.id/api/v1",
     model: process.env.AI_MODEL || "deepseek-v4.1-flash-free",
     fallbackModels: (process.env.AI_FALLBACK_MODELS || "big-pickle,mimo-v2.6-flash,muse-spark-1.3-free,space-bunny-free").split(",").map(m => m.trim()).filter(Boolean),
-    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "55000", 10),
+    // Batas satu request non-stream (ekstraksi lokasi).
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "120000", 10),
+    // Stream diputus bila tidak ada data sama sekali selama durasi ini.
+    idleTimeoutMs: parseInt(process.env.AI_IDLE_TIMEOUT_MS || "60000", 10),
+    // Tenggat total semua percobaan + fallback; harus di bawah maxDuration Vercel (300 dtk).
+    deadlineMs: parseInt(process.env.AI_DEADLINE_MS || "280000", 10),
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || "2", 10),
     visionEnabled: process.env.AI_VISION_ENABLED !== "false",
     visionModel: process.env.AI_VISION_MODEL || process.env.AI_MODEL || "deepseek-v4.1-flash-free",
@@ -87,7 +92,7 @@ function parseJsonResult(text) {
 
 async function doFetchCompletion(modelName, messages, config) {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), config.timeoutMs);
+    const id = setTimeout(() => controller.abort(), config.attemptTimeoutMs ?? config.timeoutMs);
     const start = Date.now();
     try {
         const payload = {
@@ -139,7 +144,13 @@ async function doFetchCompletion(modelName, messages, config) {
 
 async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), config.timeoutMs);
+    // Batas keras = sisa tenggat; idle timer di-reset setiap ada data masuk.
+    const id = setTimeout(() => controller.abort(), config.attemptTimeoutMs ?? config.deadlineMs);
+    let idleId = setTimeout(() => controller.abort(), config.idleTimeoutMs);
+    const resetIdle = () => {
+        clearTimeout(idleId);
+        idleId = setTimeout(() => controller.abort(), config.idleTimeoutMs);
+    };
     const start = Date.now();
     try {
         const payload = {
@@ -173,6 +184,7 @@ async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
         let chunkCount = 0;
         
         for await (const chunk of reader) {
+            resetIdle();
             const strChunk = decoder.decode(chunk, { stream: true });
             buffer += strChunk;
             fullRawText += strChunk;
@@ -231,6 +243,7 @@ async function doFetchStreamCompletion(modelName, messages, config, onChunk) {
         return true;
     } finally {
         clearTimeout(id);
+        clearTimeout(idleId);
     }
 }
 
@@ -265,12 +278,18 @@ export async function generateContentStream(systemPrompt, userPrompt, isVision =
         ? [aiConfig.visionModel, ...aiConfig.visionFallbackModels] 
         : [aiConfig.model, ...aiConfig.fallbackModels];
     let lastError = null;
+    const deadline = Date.now() + aiConfig.deadlineMs;
 
-    for (const model of models) {
+    modelLoop: for (const model of models) {
         let attempt = 0;
         while (attempt <= aiConfig.maxRetries) {
             try {
-                await doFetchStreamCompletion(model, messages, aiConfig, onChunk);
+                const remaining = deadline - Date.now();
+                if (remaining < 5000) {
+                    console.warn("⚠️ Tenggat total AI habis. Berhenti mencoba model lain.");
+                    break modelLoop;
+                }
+                await doFetchStreamCompletion(model, messages, { ...aiConfig, attemptTimeoutMs: remaining }, onChunk);
                 return; // success
             } catch (err) {
                 lastError = err;
@@ -339,15 +358,21 @@ export async function generateContent(systemPrompt, userPrompt, isVision = false
         : [aiConfig.model, ...aiConfig.fallbackModels];
     
     let lastError = null;
+    const deadline = Date.now() + aiConfig.deadlineMs;
     let jsonAttempt = 0;
     
     // Retry JSON logic: if we fail parsing JSON, we retry the whole call (only once)
-    while (jsonAttempt < 2) {
+    jsonLoop: while (jsonAttempt < 2) {
         for (const model of models) {
             let attempt = 0;
             while (attempt <= aiConfig.maxRetries) {
                 try {
-                    const rawText = await doFetchCompletion(model, messages, aiConfig);
+                    const remaining = deadline - Date.now();
+                    if (remaining < 5000) {
+                        console.warn("⚠️ Tenggat total AI habis. Berhenti mencoba model lain.");
+                        break jsonLoop;
+                    }
+                    const rawText = await doFetchCompletion(model, messages, { ...aiConfig, attemptTimeoutMs: Math.min(aiConfig.timeoutMs, remaining) });
                     try {
                         return parseJsonResult(rawText); // success!
                     } catch (err) {
