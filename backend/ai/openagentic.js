@@ -7,7 +7,7 @@ export const aiConfig = {
     apiKey: apiKey,
     baseUrl: process.env.OPENAGENTIC_BASE_URL || "https://openagentic.id/api/v1",
     model: process.env.AI_MODEL || "deepseek-v4.1-flash-free",
-    fallbackModels: (process.env.AI_FALLBACK_MODELS || "big-pickle,mimo-v2.6-flash,muse-spark-1.3-free,space-bunny-free").split(",").map(m => m.trim()).filter(Boolean),
+    fallbackModels: (process.env.AI_FALLBACK_MODELS || "minimax-m3,big-pickle,mimo-v2.6-flash,space-bunny-free,muse-spark-1.3-free").split(",").map(m => m.trim()).filter(Boolean),
     // Batas satu request non-stream (ekstraksi lokasi).
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || "120000", 10),
     // Stream diputus bila tidak ada data sama sekali selama durasi ini.
