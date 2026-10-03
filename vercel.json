@@ -6,7 +6,7 @@
       "framework": "express",
       "functions": {
         "**/*.js": {
-          "maxDuration": 60
+          "maxDuration": 300
         }
       }
     },
