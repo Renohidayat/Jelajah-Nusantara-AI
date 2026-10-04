@@ -3438,3 +3438,36 @@ body.modal-open {
         border-radius: var(--r-lg);
     }
 }
+
+/* Item meta hasil: satu unit ikon + teks agar tidak terpisah saat membungkus */
+.result-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-xs);
+    max-width: 100%;
+}
+
+.result-meta-item + .result-meta-item::before {
+    content: '\00B7';
+    margin-right: var(--sp-xs);
+    color: var(--muted-soft);
+}
+
+@media (max-width: 640px) {
+    .result-meta {
+        gap: var(--sp-sm);
+        font-size: 13px;
+    }
+
+    .result-meta-item {
+        padding: 6px var(--sp-md);
+        background: var(--surface);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--r-full);
+        line-height: 1.3;
+    }
+
+    .result-meta-item + .result-meta-item::before {
+        display: none;
+    }
+}
