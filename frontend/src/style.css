@@ -3471,3 +3471,23 @@ body.modal-open {
         display: none;
     }
 }
+
+@media (max-width: 640px) {
+    .result-view-tabs {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .result-view-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .result-view-tab {
+        flex: 1 0 auto;
+        justify-content: center;
+        min-height: 40px;
+        padding: 8px var(--sp-md);
+    }
+}
