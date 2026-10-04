@@ -3579,3 +3579,41 @@ body.modal-open {
         padding: var(--sp-md) var(--sp-base);
     }
 }
+
+/* Isi hasil tidak boleh melebarkan halaman di lebar berapa pun (issue #156) */
+.result-section,
+.result-body,
+.result-body > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.result-body {
+    overflow-wrap: anywhere;
+}
+
+.result-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.result-body img {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 900px) {
+    .result-body table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .result-body th,
+    .result-body td {
+        min-width: 96px;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+}
