@@ -1404,7 +1404,7 @@ async function openTripModal(trip) {
 
     // Avatar Handling
     const avatarContainer = body.querySelector('.modal-avatar-container');
-    const safePhotoUrl = safeUrl(trip.userPhoto);
+    const safePhotoUrl = (trip.userPhoto && trip.userPhoto.startsWith('https://')) ? trip.userPhoto : '';
     const fallback = document.createElement('div');
     fallback.className = 'modal-author-fallback';
     fallback.textContent = userName[0].toUpperCase();
