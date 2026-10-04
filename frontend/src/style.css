@@ -3491,3 +3491,46 @@ body.modal-open {
         padding: 8px var(--sp-md);
     }
 }
+
+@media (max-width: 640px) {
+    .result-section,
+    .result-body {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .result-body {
+        padding: var(--sp-lg) var(--sp-base);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+    }
+
+    .result-body h1,
+    .result-body h2 {
+        font-size: 1.25rem;
+        line-height: 1.35;
+        margin: var(--sp-lg) 0 var(--sp-md);
+    }
+
+    .result-body h3 {
+        font-size: 1.1rem;
+        line-height: 1.4;
+        margin: var(--sp-base) 0 var(--sp-sm);
+    }
+
+    .result-body table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .result-body pre {
+        overflow-x: auto;
+    }
+
+    .result-body img {
+        max-width: 100%;
+        height: auto;
+    }
+}
