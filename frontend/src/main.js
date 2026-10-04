@@ -1267,11 +1267,11 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
     if (showActions) {
         actionsHTML = `
       <div class="trip-card-actions">
-        <button class="btn-card-action btn-card-toggle" data-action="togglePublic" data-id="${tripId}" data-is-public="${isPublic}">
+        <button class="btn-card-action btn-card-toggle" data-action="togglePublic" data-args="${tripId}" data-is-public="${isPublic}">
           <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
           ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
         </button>
-        <button class="btn-card-action btn-card-delete" data-action="deleteTrip" data-id="${tripId}">
+        <button class="btn-card-action btn-card-delete" data-action="deleteTrip" data-args="${tripId}">
           <span class="material-symbols-outlined">delete</span> Hapus
         </button>
       </div>`
@@ -2444,7 +2444,7 @@ document.addEventListener('click', (e) => {
     else if (action === 'closeModal') window.closeModal();
     else if (action === 'authAction') window.authAction();
     else if (action === 'triggerFileInput') document.getElementById('file-input').click();
-    else if (action === 'togglePublic') { e.stopPropagation(); window.togglePublic(args, el.getAttribute('data-ispublic') === 'true', el); }
+    else if (action === 'togglePublic') { e.stopPropagation(); window.togglePublic(args, el.getAttribute('data-is-public') === 'true', el); }
     else if (action === 'deleteTrip') { e.stopPropagation(); window.deleteTrip(args, el.closest('.trip-card')); }
     else if (action === 'deleteTripModal') { window.deleteTrip(args, null); window.closeModal(); }
     else if (action === 'likeTrip') { e.stopPropagation(); window.likeTrip(args, el); }
