@@ -154,9 +154,6 @@ async function boot() {
             updateAuthUI(user)
         })
 
-        // Init UI dasar (bisa berjalan di semua halaman)
-        initUI()
-        
         // Render lucide icons
         if (typeof createIcons !== 'undefined') {
             createIcons({
@@ -2050,6 +2047,9 @@ async function renderLeafletMap(days) {
 // ══════════════════════════════════════════════════════════════
 //  START APP
 // ══════════════════════════════════════════════════════════════
+// initUI dipanggil segera — tidak perlu menunggu Firebase config.
+// Listener dropdown, hash routing, dan chip tidak bergantung pada auth.
+initUI()
 boot()
 
 // ══════════════════════════════════════════════════════════════
