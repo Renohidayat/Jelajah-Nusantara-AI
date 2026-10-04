@@ -922,11 +922,11 @@ function showResult(itineraryText, tripData, budgetBreakdown) {
     body.innerHTML = window.DOMPurify.sanitize(window.marked.parse(itineraryText))
 
     const parts = []
-    if (tripData.destination) parts.push(`<span class="material-symbols-outlined">location_on</span> <strong>${tripData.destination}</strong>`)
-    if (tripData.duration) parts.push(`<span class="material-symbols-outlined">calendar_month</span> ${tripData.duration} hari`)
-    if (tripData.budget) parts.push(`<span class="material-symbols-outlined">payments</span> ${tripData.budget}`)
-    if (tripData.style) parts.push(`<span class="material-symbols-outlined">luggage</span> ${tripData.style}`)
-    meta.innerHTML = window.DOMPurify.sanitize(parts.join(' &nbsp;·&nbsp; '))
+    if (tripData.destination) parts.push(`<span class="result-meta-item"><span class="material-symbols-outlined">location_on</span> <strong>${tripData.destination}</strong></span>`)
+    if (tripData.duration) parts.push(`<span class="result-meta-item"><span class="material-symbols-outlined">calendar_month</span> ${tripData.duration} hari</span>`)
+    if (tripData.budget) parts.push(`<span class="result-meta-item"><span class="material-symbols-outlined">payments</span> ${tripData.budget}</span>`)
+    if (tripData.style) parts.push(`<span class="result-meta-item"><span class="material-symbols-outlined">luggage</span> ${tripData.style}</span>`)
+    meta.innerHTML = window.DOMPurify.sanitize(parts.join(''))
 
     // Set budget state
     budgetData = budgetBreakdown
