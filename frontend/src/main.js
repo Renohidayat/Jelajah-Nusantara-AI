@@ -1297,7 +1297,7 @@ function createTripCard(trip, { showActions = false, delay = 0 }) {
           <span>${userName} &middot; ${date}</span>
         </div>
         <div class="trip-stats">
-          <span class="trip-stat" data-action="likeTrip" data-id="${tripId}">
+          <span class="trip-stat" data-action="likeTrip" data-args="${tripId}">
             <span class="material-symbols-outlined">favorite</span> <span>${likes}</span>
           </span>
         </div>
@@ -2221,7 +2221,10 @@ window.likeTrip = async function(id, btnElement) {
         showToast('Silakan masuk terlebih dahulu untuk menyukai.', 'warning');
         return;
     }
-    btnElement.disabled = true;
+    // Span tidak punya properti disabled; gunakan atribut agar tidak diklik dua kali
+    const isBtn = btnElement.tagName === 'BUTTON';
+    if (isBtn) btnElement.disabled = true;
+    else btnElement.style.pointerEvents = 'none';
     try {
         const token = await getAuthToken();
         const res = await fetch(`${API_BASE}/api/itineraries/${id}/like`, {
@@ -2230,27 +2233,37 @@ window.likeTrip = async function(id, btnElement) {
         });
         if (res.ok) {
             const data = await res.json();
-            btnElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:14px">${data.isLiked ? 'favorite' : 'favorite_border'}</span> <span class="like-count">${data.likes}</span>`;
-            
+            // Update icon
+            const iconEl = btnElement.querySelector('.material-symbols-outlined');
+            if (iconEl) iconEl.textContent = data.isLiked ? 'favorite' : 'favorite_border';
+            // Update count — cari span count atau buat jika tidak ada
+            const countEl = btnElement.querySelector('span:not(.material-symbols-outlined)');
+            if (countEl) {
+                countEl.textContent = data.likes;
+            } else {
+                btnElement.innerHTML = `<span class="material-symbols-outlined" style="font-size:14px">${data.isLiked ? 'favorite' : 'favorite_border'}</span> <span class="like-count">${data.likes}</span>`;
+            }
+
             if (data.isLiked) {
                 btnElement.classList.add('liked');
             } else {
                 btnElement.classList.remove('liked');
             }
             showToast(data.message, 'success');
-            
+
             const commTrip = communityTripsCache.find(t => t.id === id);
             if (commTrip) commTrip.likes = data.likes;
             const myTrip = myTripsCache.find(t => t.id === id);
             if (myTrip) myTrip.likes = data.likes;
-            
+
         } else {
             throw new Error('Gagal menyukai');
         }
     } catch (err) {
         showToast('Gagal menyukai. Silakan coba lagi.', 'error');
     } finally {
-        btnElement.disabled = false;
+        if (isBtn) btnElement.disabled = false;
+        else btnElement.style.pointerEvents = '';
     }
 }
 
