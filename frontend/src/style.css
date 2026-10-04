@@ -2898,6 +2898,7 @@ select:focus:not(:focus-visible) {
 
 .trip-card {
     border: none;
+    cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: transform var(--t-normal) var(--ease), box-shadow var(--t-normal) var(--ease);
 }
@@ -3025,7 +3026,8 @@ body.modal-open {
     }
     .modal-box {
         max-width: 100%;
-        height: 90vh;
+        height: auto;
+        max-height: 90vh;
         border-radius: 20px 20px 0 0;
         transform: translateY(100%);
     }
@@ -3208,16 +3210,16 @@ body.modal-open {
 }
 .auth-modal-icon {
     font-size: 3rem;
-    color: var(--color-primary);
+    color: var(--primary);
     margin-bottom: var(--sp-sm);
 }
 .auth-modal-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--color-text);
+    color: var(--ink);
 }
 .auth-modal-desc {
-    color: var(--color-text-light);
+    color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.5;
     margin-bottom: var(--sp-xl);
@@ -3231,14 +3233,14 @@ body.modal-open {
     width: 100%;
     max-width: 300px;
     background-color: white;
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+    color: var(--ink);
+    border: 1px solid var(--border);
     font-weight: 600;
     transition: all 0.2s;
 }
 .auth-btn-google:hover {
-    background-color: var(--color-bg-alt);
-    border-color: var(--color-text-light);
+    background-color: var(--surface-hover);
+    border-color: var(--muted);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
@@ -3249,7 +3251,7 @@ body.modal-open {
 
 /* Logout Modal */
 .auth-modal--danger .auth-modal-icon {
-    color: var(--color-danger);
+    color: var(--error);
 }
 .auth-modal-actions {
     display: flex;
@@ -3278,12 +3280,12 @@ body.modal-open {
     border-radius: 20px;
     cursor: pointer;
     transition: background-color 0.2s;
-    color: var(--color-text);
+    color: var(--ink);
 }
 
 .user-dropdown-btn:hover,
 .user-dropdown-container.active .user-dropdown-btn {
-    background-color: var(--color-bg-alt);
+    background-color: var(--surface-hover);
 }
 
 .user-dropdown-btn .user-avatar {
@@ -3311,7 +3313,7 @@ body.modal-open {
     right: 0;
     width: 240px;
     background-color: white;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--border);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     opacity: 0;
@@ -3339,12 +3341,12 @@ body.modal-open {
 .user-dropdown-fullname {
     font-weight: 600;
     font-size: 0.95rem;
-    color: var(--color-text);
+    color: var(--ink);
 }
 
 .user-dropdown-email {
     font-size: 0.85rem;
-    color: var(--color-text-light);
+    color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3352,7 +3354,7 @@ body.modal-open {
 
 .user-dropdown-divider {
     height: 1px;
-    background-color: var(--color-border);
+    background-color: var(--border);
     margin: 4px 0;
 }
 
@@ -3368,11 +3370,11 @@ body.modal-open {
     font-size: 0.95rem;
     cursor: pointer;
     transition: background-color 0.2s;
-    color: var(--color-text);
+    color: var(--ink);
 }
 
 .user-dropdown-item:hover {
-    background-color: var(--color-bg-alt);
+    background-color: var(--surface-hover);
 }
 
 .user-dropdown-item .material-symbols-outlined {
@@ -3380,7 +3382,7 @@ body.modal-open {
 }
 
 .user-dropdown-item.text-danger {
-    color: var(--color-danger);
+    color: var(--error);
 }
 .user-dropdown-item.text-danger:hover {
     background-color: #fee2e2;
