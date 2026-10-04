@@ -13,7 +13,7 @@
             </div>
 
             <div class="nav-auth" id="nav-auth">
-                <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
+                <button class="btn btn-primary" id="btn-login" data-action="handleLogin">
                     Masuk
                 </button>
                 <div class="user-dropdown-container hidden" id="user-info">
@@ -28,7 +28,7 @@
                             <span class="user-dropdown-email" id="user-dropdown-email"></span>
                         </div>
                         <div class="user-dropdown-divider"></div>
-                        <button class="user-dropdown-item text-danger" onclick="handleLogout()">
+                        <button class="user-dropdown-item text-danger" data-action="handleLogout">
                             <span class="material-symbols-outlined">logout</span>
                             Keluar
                         </button>
@@ -52,7 +52,7 @@
             
             <div class="mobile-menu-divider"></div>
             
-            <button class="btn btn-primary" id="mobile-btn-login" onclick="handleLogin()">
+            <button class="btn btn-primary" id="mobile-btn-login" data-action="handleLogin">
                 Masuk
             </button>
             
@@ -61,7 +61,7 @@
                     <img class="mobile-user-avatar" id="mobile-user-avatar" src="" alt="Avatar" width="32" height="32" />
                     <span class="mobile-user-name" id="mobile-user-name">Traveler</span>
                 </div>
-                <button class="btn btn-ghost" id="mobile-btn-logout" onclick="handleLogout()">
+                <button class="btn btn-ghost" id="mobile-btn-logout" data-action="handleLogout">
                     <i data-lucide="log-out"></i>
                     Keluar
                 </button>
