@@ -3534,3 +3534,18 @@ body.modal-open {
         height: auto;
     }
 }
+
+@media (max-width: 640px) {
+    .weather-info-box {
+        min-width: 0;
+        padding: var(--sp-base);
+    }
+
+    .weather-ai-rec-box {
+        padding: var(--sp-base);
+    }
+
+    .weather-ai-text {
+        overflow-wrap: anywhere;
+    }
+}
