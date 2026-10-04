@@ -1510,10 +1510,12 @@ window.deleteTrip = async function (id, cardEl) {
             const d = await resp.json()
             throw new Error(d.error || 'Gagal menghapus.')
         }
-        cardEl.style.transition = 'all 0.3s ease'
-        cardEl.style.opacity = '0'
-        cardEl.style.transform = 'scale(0.95)'
-        setTimeout(() => cardEl.remove(), 300)
+        if (cardEl) {
+            cardEl.style.transition = 'all 0.3s ease'
+            cardEl.style.opacity = '0'
+            cardEl.style.transform = 'scale(0.95)'
+            setTimeout(() => cardEl.remove(), 300)
+        }
         showToast('Itinerary berhasil dihapus.', 'success')
     } catch (err) {
         showToast(err.message, 'error')
