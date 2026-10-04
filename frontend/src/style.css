@@ -3399,3 +3399,42 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.9);
   text-decoration: underline;
 }
+
+/* -- RESULT SECTION: MOBILE (issue #156) -- */
+@media (max-width: 640px) {
+    .result-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--sp-base);
+    }
+
+    .result-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--sp-sm);
+    }
+
+    .result-actions .btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+        padding-left: var(--sp-md);
+        padding-right: var(--sp-md);
+    }
+
+    .result-actions .btn-primary,
+    .result-actions .public-toggle {
+        grid-column: 1 / -1;
+    }
+
+    .result-actions .public-toggle {
+        flex-direction: row-reverse;
+        justify-content: space-between;
+        min-height: 44px;
+        padding: 0 var(--sp-base);
+        background: var(--surface);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--r-lg);
+    }
+}
