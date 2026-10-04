@@ -203,7 +203,7 @@ window.handleLogin = function () {
                 <h2>Masuk ke Jelajah Nusantara</h2>
             </div>
             <p class="auth-modal-desc">Simpan itinerary perjalananmu dan bagikan pengalamanmu dengan komunitas traveler lainnya.</p>
-            <button class="btn btn-primary auth-btn-google" onclick="executeLogin()">
+            <button class="btn btn-primary auth-btn-google" data-action="executeLogin">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="auth-google-logo">
                 Lanjutkan dengan Google
             </button>
@@ -257,8 +257,8 @@ window.handleLogout = function () {
             </div>
             <p class="auth-modal-desc">Apakah kamu yakin ingin keluar? Kamu perlu masuk lagi untuk menyimpan itinerary baru.</p>
             <div class="auth-modal-actions">
-                <button class="btn btn-outline" onclick="closeModal()">Batal</button>
-                <button class="btn btn-danger" onclick="executeLogout()">Ya, Keluar</button>
+                <button class="btn btn-outline" data-action="closeModal">Batal</button>
+                <button class="btn btn-danger" data-action="executeLogout">Ya, Keluar</button>
             </div>
         </div>
     `;
@@ -1352,12 +1352,12 @@ async function openTripModal(trip) {
     const ownerActions = isOwner ? `
         <div class="modal-owner-actions">
             <button class="modal-action-btn modal-action-toggle"
-                onclick="togglePublic('${escapeHTML(trip.id)}', ${!isPublic}, this)">
+                data-action="togglePublicModal" data-args="${escapeHTML(trip.id)}" data-is-public="${isPublic}">
                 <span class="material-symbols-outlined">${isPublic ? 'lock' : 'public'}</span>
                 ${isPublic ? 'Jadikan Privat' : 'Jadikan Publik'}
             </button>
             <button class="modal-action-btn modal-action-delete"
-                onclick="deleteTrip('${escapeHTML(trip.id)}', null); closeModal()">
+                data-action="deleteTripModal" data-args="${escapeHTML(trip.id)}">
                 <span class="material-symbols-outlined">delete</span>
                 Hapus
             </button>
@@ -1379,7 +1379,7 @@ async function openTripModal(trip) {
                         <span class="modal-author-name"></span>
                         ${date ? `<span class="modal-author-sep">·</span><span class="modal-author-date">${escapeHTML(date)}</span>` : ''}
                     </div>
-                    <button class="modal-like-btn" onclick="likeTrip('${escapeHTML(trip.id)}', this)">
+                    <button class="modal-like-btn" data-action="likeTrip" data-args="${escapeHTML(trip.id)}">
                         <span class="material-symbols-outlined">favorite</span>
                         <span>${likes}</span>
                     </button>
@@ -1542,8 +1542,8 @@ window.togglePublic = async function (id, newState, btn) {
         btn.innerHTML = newState
             ? '<span class="material-symbols-outlined" style="font-size:14px">lock</span> Jadikan Privat'
             : '<span class="material-symbols-outlined" style="font-size:14px">public</span> Jadikan Publik'
-        btn.setAttribute('onclick',
-            `event.stopPropagation(); togglePublic('${id}', ${!newState}, this)`)
+        // Update data-is-public agar klik berikutnya memakai state yang benar
+        btn.setAttribute('data-is-public', String(newState))
 
         const metaEl = btn.closest('.trip-card-body')?.querySelector('.trip-card-meta')
         if (metaEl) {
@@ -2460,6 +2460,7 @@ document.addEventListener('click', (e) => {
     else if (action === 'authAction') window.authAction();
     else if (action === 'triggerFileInput') document.getElementById('file-input').click();
     else if (action === 'togglePublic') { e.stopPropagation(); window.togglePublic(args, el.getAttribute('data-is-public') === 'true', el); }
+    else if (action === 'togglePublicModal') { window.togglePublic(args, el.getAttribute('data-is-public') === 'true', el); }
     else if (action === 'deleteTrip') { e.stopPropagation(); window.deleteTrip(args, el.closest('.trip-card')); }
     else if (action === 'deleteTripModal') { window.deleteTrip(args, null); window.closeModal(); }
     else if (action === 'likeTrip') { e.stopPropagation(); window.likeTrip(args, el); }
